@@ -1,15 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { MantineProvider } from '@mantine/core';
+import { Notifications } from '@mantine/notifications';
 import '@mantine/core/styles.css';
+import '@mantine/dates/styles.css';
+import '@mantine/notifications/styles.css';
 
-function App(): React.ReactElement {
-  return (
-    <main>
-      <h1>DocArchiv</h1>
-      <p>Frontend-Grundgeruest ist bereit.</p>
-    </main>
-  );
-}
+import { App } from './App';
+import { theme } from './theme';
 
 const rootElement = document.getElementById('root');
 
@@ -19,6 +17,9 @@ if (rootElement === null) {
 
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
-    <App />
+    <MantineProvider theme={theme} defaultColorScheme="light">
+      <Notifications position="top-right" />
+      <App />
+    </MantineProvider>
   </React.StrictMode>,
 );
