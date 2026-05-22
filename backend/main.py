@@ -9,6 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from api.documents import router as documents_router
+from api.tags import router as tags_router
 from config import Settings, get_settings
 
 logger = logging.getLogger(__name__)
@@ -43,6 +45,9 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    app.include_router(documents_router, prefix=settings.api_prefix)
+    app.include_router(tags_router, prefix=settings.api_prefix)
 
     @app.get(f"{settings.api_prefix}/health", tags=["health"])
     def health_check() -> dict[str, Any]:
