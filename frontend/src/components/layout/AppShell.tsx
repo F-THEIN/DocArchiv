@@ -133,7 +133,7 @@ export function DocArchivAppShell(): React.ReactElement {
                   DocArchiv
                 </Title>
                 <Badge variant="light" color="grape" visibleFrom="xs">
-                  Erlebnisansicht
+                  Dokument-Archiv
                 </Badge>
               </Group>
               <Text size="sm" c="white" visibleFrom="sm" truncate>
