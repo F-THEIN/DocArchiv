@@ -16,6 +16,7 @@ from domain.schemas import (
     PaginatedResponse,
     TagCreate,
     TagResponse,
+    TagUpdate,
 )
 from domain.services import DocumentNotFoundError, TagNotFoundError
 from main import app
@@ -170,6 +171,19 @@ class FakeTagService:
         self.get_tag(tag_id)
         del self.tags[tag_id]
         self.deleted_tag_ids.append(tag_id)
+
+    def update_tag(self, tag_id: int, data: TagUpdate) -> TagResponse:
+        """Aktualisiert einen Tag oder simuliert einen NotFound-Fehler."""
+        tag = self.get_tag(tag_id)
+        update_data = data.model_dump(exclude_unset=True)
+        updated = TagResponse(
+            id=tag.id,
+            name=update_data.get("name", tag.name),
+            color=update_data.get("color", tag.color) if "color" in update_data else tag.color,
+            document_count=tag.document_count,
+        )
+        self.tags[tag_id] = updated
+        return updated
 
 
 @pytest.fixture

@@ -5,7 +5,7 @@ import { DocumentDetail } from '../components/documents/DocumentDetail';
 import { DocumentList } from '../components/documents/DocumentList';
 import { SearchBar } from '../components/search/SearchBar';
 import { TagCloud } from '../components/tags/TagCloud';
-import type { DocumentSummary } from '../types/document';
+import type { DocumentSummary, Tag } from '../types/document';
 
 interface HomePageProps {
   documents: DocumentSummary[];
@@ -23,6 +23,7 @@ interface HomePageProps {
   onPageChange: (page: number) => void;
   onRetryDocuments: () => void;
   onToggleTag: (tagName: string) => void;
+  onEditTag: (tag: Tag) => void;
 }
 
 export function HomePage({
@@ -41,6 +42,7 @@ export function HomePage({
   onPageChange,
   onRetryDocuments,
   onToggleTag,
+  onEditTag,
 }: HomePageProps): React.ReactElement {
   return (
     <Stack gap="lg">
@@ -52,7 +54,7 @@ export function HomePage({
         </Alert>
       ) : null}
 
-      <TagCloud tags={tags} selectedTags={selectedTags} onToggleTag={onToggleTag} />
+      <TagCloud tags={tags} selectedTags={selectedTags} onToggleTag={onToggleTag} onEditTag={onEditTag} />
 
       <DocumentList
         documents={documents}

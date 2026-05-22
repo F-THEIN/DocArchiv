@@ -6,13 +6,15 @@ import { useState } from 'react';
 import { useDocuments } from '../../hooks/useDocuments';
 import { useTags } from '../../hooks/useTags';
 import { HomePage } from '../../pages/HomePage';
-import type { DocumentSummary } from '../../types/document';
+import type { DocumentSummary, Tag } from '../../types/document';
 import { FilterSidebar, type FilterValues } from '../search/FilterSidebar';
+import { TagEditModal } from '../tags/TagEditModal';
 
 export function DocArchivAppShell(): React.ReactElement {
   const [mobileOpened, { toggle: toggleMobile }] = useDisclosure(false);
   const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true);
   const [selectedDocument, setSelectedDocument] = useState<DocumentSummary | null>(null);
+  const [editingTag, setEditingTag] = useState<Tag | null>(null);
   const documentsState = useDocuments();
   const tagsState = useTags();
 
@@ -61,6 +63,20 @@ export function DocArchivAppShell(): React.ReactElement {
       : [...selectedTags, tagName];
 
     documentsState.updateQuery({ tags: nextTags });
+  }
+
+  function handleEditTag(tag: Tag): void {
+    setEditingTag(tag);
+  }
+
+  function handleCloseTagEdit(): void {
+    setEditingTag(null);
+  }
+
+  async function handleTagSaved(): Promise<void> {
+    setEditingTag(null);
+    await tagsState.reload();
+    await documentsState.reload();
   }
 
   return (
@@ -129,8 +145,16 @@ export function DocArchivAppShell(): React.ReactElement {
           onPageChange={(page) => documentsState.updateQuery({ page })}
           onRetryDocuments={() => void documentsState.reload()}
           onToggleTag={handleToggleTag}
+          onEditTag={handleEditTag}
         />
       </MantineAppShell.Main>
+
+      <TagEditModal
+        tag={editingTag}
+        opened={editingTag !== null}
+        onClose={handleCloseTagEdit}
+        onSaved={() => void handleTagSaved()}
+      />
     </MantineAppShell>
   );
 }

@@ -197,3 +197,9 @@ class TagRepository:
         """Loescht einen Tag aus der Session."""
         self.session.delete(tag)
         self.session.flush()
+
+    def update(self, tag: Tag) -> Tag:
+        """Flusht einen geaenderten Tag und gibt ihn zurueck."""
+        self.session.flush()
+        self.session.refresh(tag)
+        return tag

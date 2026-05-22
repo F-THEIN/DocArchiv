@@ -3,7 +3,7 @@
 from fastapi import APIRouter, HTTPException, status
 
 from api.dependencies import TagServiceDep
-from domain.schemas import TagCreate, TagResponse
+from domain.schemas import TagCreate, TagResponse, TagUpdate
 from domain.services import TagNotFoundError
 
 router = APIRouter(prefix="/tags", tags=["tags"])
@@ -26,6 +26,15 @@ def get_tag(tag_id: int, service: TagServiceDep) -> TagResponse:
     """Liefert einen Tag anhand seiner ID."""
     try:
         return service.get_tag(tag_id)
+    except TagNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+
+@router.patch("/{tag_id}", response_model=TagResponse)
+def update_tag(tag_id: int, data: TagUpdate, service: TagServiceDep) -> TagResponse:
+    """Aktualisiert Name oder Farbe eines Tags."""
+    try:
+        return service.update_tag(tag_id, data)
     except TagNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 

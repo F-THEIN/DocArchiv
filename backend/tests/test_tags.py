@@ -74,6 +74,54 @@ def test_delete_tag_returns_404_for_missing_tag(client: TestClient) -> None:
     assert "Tag mit ID 999" in response.json()["detail"]
 
 
+def test_update_tag_name(client: TestClient) -> None:
+    """Ein Tag-Name kann per PATCH aktualisiert werden."""
+    response = client.patch("/api/tags/2", json={"name": " Neuer Name "})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == 2
+    assert data["name"] == "neuer name"
+    assert data["color"] is None
+    assert data["document_count"] == 1
+
+
+def test_update_tag_color(client: TestClient) -> None:
+    """Eine Tag-Farbe kann per PATCH aktualisiert werden."""
+    response = client.patch("/api/tags/1", json={"color": "#FF0000"})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == 1
+    assert data["name"] == "rechnung"
+    assert data["color"] == "#FF0000"
+
+
+def test_update_tag_name_and_color(client: TestClient) -> None:
+    """Name und Farbe eines Tags koennen gemeinsam per PATCH aktualisiert werden."""
+    response = client.patch("/api/tags/1", json={"name": " Quittung ", "color": " #AABBCC "})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["name"] == "quittung"
+    assert data["color"] == "#AABBCC"
+
+
+def test_update_tag_rejects_blank_name(client: TestClient) -> None:
+    """Leere Namen erzeugen einen Validierungsfehler beim PATCH."""
+    response = client.patch("/api/tags/1", json={"name": "   "})
+
+    assert response.status_code == 422
+
+
+def test_update_tag_returns_404_for_missing_tag(client: TestClient) -> None:
+    """PATCH auf einen nicht vorhandenen Tag liefert HTTP 404."""
+    response = client.patch("/api/tags/999", json={"name": "test"})
+
+    assert response.status_code == 404
+    assert "Tag mit ID 999" in response.json()["detail"]
+
+
 def test_tag_create_schema_normalizes_name_and_color() -> None:
     """Das TagCreate-Schema normalisiert Name und Farbe."""
     schema = TagCreate(name=" Rechnung ", color=" #003B7E ")
