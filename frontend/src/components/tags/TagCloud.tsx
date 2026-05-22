@@ -65,7 +65,7 @@ export function TagCloud({ tags, selectedTags, onToggleTag, onEditTag }: TagClou
                   type="button"
                   color={tag.color ?? 'blue'}
                   variant={isSelected ? 'gradient' : 'light'}
-                  gradient={{ from: 'orange.5', to: 'pink.5', deg: 120 }}
+                  {...(isSelected ? { gradient: { from: 'orange.5', to: 'pink.5', deg: 120 } } : {})}
                   size="lg"
                   radius="xl"
                   styles={{ root: { cursor: 'pointer' } }}

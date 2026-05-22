@@ -132,7 +132,7 @@ export function DocArchivAppShell(): React.ReactElement {
                 <Title order={1} size="h2">
                   DocArchiv
                 </Title>
-                <Badge variant="light" color="grape" visibleFrom="xs">
+                <Badge variant="filled" color="grape" visibleFrom="xs">
                   Dokument-Archiv
                 </Badge>
               </Group>
