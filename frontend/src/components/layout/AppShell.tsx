@@ -1,5 +1,5 @@
 import { ActionIcon, AppShell as MantineAppShell, Badge, Burger, Button, Group, Stack, Text, Title, Tooltip } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
+import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import { IconRefresh } from '@tabler/icons-react';
 import { useState } from 'react';
 
@@ -13,6 +13,7 @@ export function DocArchivAppShell(): React.ReactElement {
   const [mobileOpened, { toggle: toggleMobile }] = useDisclosure(false);
   const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true);
   const [selectedDocument, setSelectedDocument] = useState<DocumentSummary | null>(null);
+  const isMobile = useMediaQuery('(max-width: 47.99em)');
   const documentsState = useDocuments();
   const tagsState = useTags();
   const refreshLabel = 'Aktualisieren';
@@ -76,7 +77,7 @@ export function DocArchivAppShell(): React.ReactElement {
     >
       <MantineAppShell.Header>
         <Group h="100%" px={{ base: 'sm', sm: 'lg' }} justify="space-between" wrap="nowrap">
-          <Group gap="sm" wrap="nowrap" style={{ flex: 1 }} miw={0}>
+          <Group gap="sm" wrap="nowrap" flex={1} miw={0}>
             <Burger opened={mobileOpened} onClick={toggleMobile} hiddenFrom="md" size="sm" />
             <Burger opened={desktopOpened} onClick={toggleDesktop} visibleFrom="md" size="sm" />
             <Stack gap={0} miw={0}>
@@ -94,27 +95,29 @@ export function DocArchivAppShell(): React.ReactElement {
             </Stack>
           </Group>
 
-          <Tooltip label={refreshLabel} hiddenFrom="sm">
-            <ActionIcon
+          {isMobile ? (
+            <Tooltip label={refreshLabel}>
+              <ActionIcon
+                variant="light"
+                aria-label={refreshLabel}
+                aria-busy={documentsState.isLoading}
+                onClick={() => void documentsState.reload()}
+                loading={documentsState.isLoading}
+              >
+                <IconRefresh size={16} />
+              </ActionIcon>
+            </Tooltip>
+          ) : (
+            <Button
               variant="light"
-              aria-label={refreshLabel}
+              leftSection={<IconRefresh size={16} />}
               aria-busy={documentsState.isLoading}
               onClick={() => void documentsState.reload()}
               loading={documentsState.isLoading}
             >
-              <IconRefresh size={16} />
-            </ActionIcon>
-          </Tooltip>
-          <Button
-            variant="light"
-            leftSection={<IconRefresh size={16} />}
-            visibleFrom="sm"
-            aria-busy={documentsState.isLoading}
-            onClick={() => void documentsState.reload()}
-            loading={documentsState.isLoading}
-          >
-            {refreshLabel}
-          </Button>
+              {refreshLabel}
+            </Button>
+          )}
         </Group>
       </MantineAppShell.Header>
 
