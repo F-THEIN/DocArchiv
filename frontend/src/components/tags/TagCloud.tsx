@@ -13,7 +13,15 @@ interface TagCloudProps {
 export function TagCloud({ tags, selectedTags, onToggleTag, onEditTag }: TagCloudProps): React.ReactElement {
   if (tags.length === 0) {
     return (
-      <Paper withBorder radius="lg" p="md">
+      <Paper
+        withBorder
+        radius="xl"
+        p="md"
+        style={{
+          borderColor: 'rgba(255, 95, 109, 0.25)',
+          background: 'linear-gradient(140deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 240, 245, 0.95) 100%)',
+        }}
+      >
         <Stack gap={4}>
           <Title order={2} size="h4">
             Tags
@@ -27,7 +35,15 @@ export function TagCloud({ tags, selectedTags, onToggleTag, onEditTag }: TagClou
   }
 
   return (
-    <Paper withBorder radius="lg" p="md">
+    <Paper
+      withBorder
+      radius="xl"
+      p="md"
+      style={{
+        borderColor: 'rgba(255, 95, 109, 0.25)',
+        background: 'linear-gradient(140deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 240, 245, 0.95) 100%)',
+      }}
+    >
       <Stack gap="sm">
         <Stack gap={2}>
           <Title order={2} size="h4">
@@ -48,7 +64,8 @@ export function TagCloud({ tags, selectedTags, onToggleTag, onEditTag }: TagClou
                   component="button"
                   type="button"
                   color={tag.color ?? 'blue'}
-                  variant={isSelected ? 'filled' : 'light'}
+                  variant={isSelected ? 'gradient' : 'light'}
+                  gradient={{ from: 'orange.5', to: 'pink.5', deg: 120 }}
                   size="lg"
                   radius="xl"
                   styles={{ root: { cursor: 'pointer' } }}

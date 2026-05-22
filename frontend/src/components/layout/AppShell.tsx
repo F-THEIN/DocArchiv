@@ -9,10 +9,11 @@ import {
   Text,
   Title,
   Tooltip,
+  alpha,
   useMantineTheme,
 } from '@mantine/core';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
-import { IconRefresh } from '@tabler/icons-react';
+import { IconRefresh, IconSparkles } from '@tabler/icons-react';
 import { useState } from 'react';
 
 import { useDocuments } from '../../hooks/useDocuments';
@@ -103,6 +104,23 @@ export function DocArchivAppShell(): React.ReactElement {
         collapsed: { mobile: !mobileOpened, desktop: !desktopOpened },
       }}
       padding="lg"
+      styles={{
+        main: {
+          background:
+            'radial-gradient(circle at top right, rgba(255, 179, 71, 0.22), transparent 45%), linear-gradient(180deg, #fffaf3 0%, #f8f9ff 100%)',
+        },
+        header: {
+          background: 'linear-gradient(120deg, #ff7a18 0%, #ff5f6d 55%, #7f5af0 100%)',
+          borderBottom: 'none',
+          color: 'white',
+          boxShadow: '0 10px 24px rgba(127, 90, 240, 0.25)',
+        },
+        navbar: {
+          background: alpha('#ffffff', 0.9),
+          backdropFilter: 'blur(10px)',
+          borderRight: `1px solid ${alpha(theme.colors.orange[4], 0.25)}`,
+        },
+      }}
     >
       <MantineAppShell.Header>
         <Group h="100%" px={{ base: 'sm', sm: 'lg' }} justify="space-between" wrap="nowrap">
@@ -114,12 +132,12 @@ export function DocArchivAppShell(): React.ReactElement {
                 <Title order={1} size="h2">
                   DocArchiv
                 </Title>
-                <Badge variant="light" visibleFrom="xs">
-                  SPA
+                <Badge variant="light" color="grape" visibleFrom="xs">
+                  Erlebnisansicht
                 </Badge>
               </Group>
-              <Text size="sm" c="dimmed" visibleFrom="sm" truncate>
-                Durchsuchbarer Index fuer gescannte Dokumente
+              <Text size="sm" c="white" visibleFrom="sm" truncate>
+                Lebendiger Dokumenten-Index mit schneller Uebersicht
               </Text>
             </Stack>
           </Group>
@@ -127,7 +145,8 @@ export function DocArchivAppShell(): React.ReactElement {
           {isMobile ? (
             <Tooltip label={refreshLabel} withArrow>
               <ActionIcon
-                variant="light"
+                variant="white"
+                color="violet"
                 aria-label={refreshLabel}
                 aria-busy={documentsState.isLoading}
                 onClick={() => void documentsState.reload()}
@@ -138,7 +157,9 @@ export function DocArchivAppShell(): React.ReactElement {
             </Tooltip>
           ) : (
             <Button
-              variant="light"
+              variant="white"
+              color="violet"
+              rightSection={<IconSparkles size={16} />}
               leftSection={<IconRefresh size={16} />}
               aria-busy={documentsState.isLoading}
               onClick={() => void documentsState.reload()}

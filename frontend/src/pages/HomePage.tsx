@@ -1,5 +1,5 @@
-import { Alert, Stack } from '@mantine/core';
-import { IconAlertCircle } from '@tabler/icons-react';
+import { Alert, Group, Paper, Stack, Text, ThemeIcon, Title } from '@mantine/core';
+import { IconAlertCircle, IconSparkles } from '@tabler/icons-react';
 
 import { DocumentDetail } from '../components/documents/DocumentDetail';
 import { DocumentList } from '../components/documents/DocumentList';
@@ -46,6 +46,29 @@ export function HomePage({
 }: HomePageProps): React.ReactElement {
   return (
     <Stack gap="lg">
+      <Paper
+        withBorder
+        radius="xl"
+        p="lg"
+        style={{
+          borderColor: 'rgba(255, 122, 24, 0.22)',
+          background:
+            'linear-gradient(120deg, rgba(255, 122, 24, 0.12) 0%, rgba(255, 95, 109, 0.12) 50%, rgba(127, 90, 240, 0.15) 100%)',
+        }}
+      >
+        <Group wrap="nowrap" align="flex-start" gap="md">
+          <ThemeIcon size={44} radius="xl" variant="gradient" gradient={{ from: 'orange.5', to: 'grape.6', deg: 130 }}>
+            <IconSparkles size={22} />
+          </ThemeIcon>
+          <Stack gap={2}>
+            <Title order={2}>Willkommen im Archiv</Title>
+            <Text c="dimmed">
+              Entdecke Dokumente schneller mit farbigen Filtern, klaren Karten und direktem Zugriff auf Nextcloud.
+            </Text>
+          </Stack>
+        </Group>
+      </Paper>
+
       <SearchBar value={searchValue} onSearch={onSearch} />
 
       {tagError ? (
