@@ -1,5 +1,4 @@
-import { ActionIcon, Badge, Group, Paper, Stack, Text, Title } from '@mantine/core';
-import { IconPencil } from '@tabler/icons-react';
+import { Anchor, Badge, Group, ScrollArea, Stack, Text } from '@mantine/core';
 
 import type { Tag } from '../../types/document';
 
@@ -11,83 +10,100 @@ interface TagCloudProps {
 }
 
 export function TagCloud({ tags, selectedTags, onToggleTag, onEditTag }: TagCloudProps): React.ReactElement {
+  const editableTag = tags.find((tag) => selectedTags.includes(tag.name)) ?? null;
+
   if (tags.length === 0) {
     return (
-      <Paper
-        withBorder
-        radius="xl"
-        p="md"
-        style={{
-          borderColor: 'rgba(255, 95, 109, 0.25)',
-          background: 'linear-gradient(140deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 240, 245, 0.95) 100%)',
-        }}
-      >
-        <Stack gap={4}>
-          <Title order={2} size="h4">
-            Tags
-          </Title>
-          <Text size="sm" c="dimmed">
-            Noch keine Tags vorhanden.
+      <Stack gap={4} px="xs">
+        <Group justify="space-between">
+          <Text c="var(--gold)" fw={800} size="13px" tt="uppercase" style={{ letterSpacing: '0.12em', fontFamily: '"Montserrat", sans-serif' }}>
+            ✦ Tag-Schnellauswahl
           </Text>
-        </Stack>
-      </Paper>
+          <Text size="11px" c="var(--white-40)">
+            Keine Tags
+          </Text>
+        </Group>
+        <Text size="sm" c="var(--white-40)">
+          Noch keine Tags vorhanden.
+        </Text>
+      </Stack>
     );
   }
 
   return (
-    <Paper
-      withBorder
-      radius="xl"
-      p="md"
-      style={{
-        borderColor: 'rgba(255, 95, 109, 0.25)',
-        background: 'linear-gradient(140deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 240, 245, 0.95) 100%)',
-      }}
-    >
-      <Stack gap="sm">
-        <Stack gap={2}>
-          <Title order={2} size="h4">
-            Tag-Schnellauswahl
-          </Title>
-          <Text size="sm" c="dimmed">
-            Klick auf einen Tag aktiviert oder entfernt den Filter.
+    <Stack gap="sm" px="xs">
+      <Group justify="space-between" align="center">
+        <Text c="var(--gold)" fw={800} size="13px" tt="uppercase" style={{ letterSpacing: '0.12em', fontFamily: '"Montserrat", sans-serif' }}>
+          ✦ Tag-Schnellauswahl
+        </Text>
+        <Group gap="sm">
+          <Text size="11px" c="var(--white-40)">
+            {tags.length} verfuegbar
           </Text>
-        </Stack>
+          {onEditTag !== undefined ? (
+            <Anchor
+              component="button"
+              type="button"
+              size="11px"
+              c={editableTag === null ? 'rgba(255,255,255,0.25)' : 'var(--white-40)'}
+              style={{ textDecorationColor: 'var(--white-15)' }}
+              onClick={() => {
+                if (editableTag !== null) {
+                  onEditTag(editableTag);
+                }
+              }}
+            >
+              Tags verwalten
+            </Anchor>
+          ) : null}
+        </Group>
+      </Group>
 
-        <Group gap="xs">
-          {tags.map((tag) => {
+      <ScrollArea
+        type="never"
+        scrollbarSize={0}
+        style={{ width: '100%' }}
+        styles={{ viewport: { paddingBottom: 2, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } }}
+      >
+        <Group gap="xs" wrap="nowrap">
+          {tags.map((tag, index) => {
             const isSelected = selectedTags.includes(tag.name);
+            const activeColor = index % 3 === 0 ? 'var(--gold)' : index % 3 === 1 ? '#2563be' : 'var(--teal)';
 
             return (
-              <Group key={tag.id} gap={2} wrap="nowrap">
-                <Badge
-                  component="button"
-                  type="button"
-                  color={tag.color ?? 'blue'}
-                  variant={isSelected ? 'gradient' : 'light'}
-                  {...(isSelected ? { gradient: { from: 'orange.5', to: 'pink.5', deg: 120 } } : {})}
-                  size="lg"
-                  radius="xl"
-                  styles={{ root: { cursor: 'pointer' } }}
-                  onClick={() => onToggleTag(tag.name)}
-                >
-                  {tag.name} · {tag.document_count}
-                </Badge>
-                {onEditTag !== undefined ? (
-                  <ActionIcon
-                    variant="subtle"
-                    size="sm"
-                    aria-label={`Tag "${tag.name}" bearbeiten`}
-                    onClick={() => onEditTag(tag)}
-                  >
-                    <IconPencil size={14} />
-                  </ActionIcon>
-                ) : null}
-              </Group>
+              <Badge
+                key={tag.id}
+                component="button"
+                type="button"
+                radius="xl"
+                onClick={() => onToggleTag(tag.name)}
+                styles={{
+                  root: {
+                    cursor: 'pointer',
+                    borderRadius: 100,
+                    fontFamily: '"Montserrat", sans-serif',
+                    fontWeight: 700,
+                    fontSize: 11,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.07em',
+                    border: '1px solid var(--white-15)',
+                    background: isSelected ? activeColor : 'var(--navy-card)',
+                    color: isSelected ? '#0f1f3d' : 'var(--white-40)',
+                    paddingRight: 10,
+                    paddingLeft: 10,
+                  },
+                }}
+              >
+                {tag.name}
+                <Text span c={isSelected ? 'rgba(15,31,61,0.65)' : 'rgba(255,255,255,0.65)'}>
+                  {' '}
+                  · {tag.document_count}
+                </Text>
+              </Badge>
             );
           })}
         </Group>
-      </Stack>
-    </Paper>
+      </ScrollArea>
+    </Stack>
   );
 }

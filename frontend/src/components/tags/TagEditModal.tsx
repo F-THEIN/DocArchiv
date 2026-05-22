@@ -73,7 +73,18 @@ export function TagEditModal({ tag, opened, onClose, onSaved }: TagEditModalProp
   const modalKey = tag ? `${tag.id}-${tag.name}-${tag.color ?? ''}` : 'empty';
 
   return (
-    <Modal key={modalKey} opened={opened} onClose={handleClose} title="Tag bearbeiten" size="sm">
+    <Modal
+      key={modalKey}
+      opened={opened}
+      onClose={handleClose}
+      title="Tag bearbeiten"
+      size="sm"
+      styles={{
+        content: { background: 'var(--navy-mid)' },
+        header: { background: 'var(--navy-mid)', borderBottom: '1px solid var(--white-15)' },
+        title: { color: 'white', fontFamily: '"Montserrat", sans-serif', fontWeight: 800 },
+      }}
+    >
       <form onSubmit={(e) => void handleSubmit(e)}>
         <TextInput
           label="Name"
@@ -83,6 +94,10 @@ export function TagEditModal({ tag, opened, onClose, onSaved }: TagEditModalProp
           value={name}
           onChange={(e) => setName(e.currentTarget.value)}
           error={nameError}
+          styles={{
+            label: { color: 'var(--white-40)', fontFamily: '"Montserrat", sans-serif', textTransform: 'uppercase', letterSpacing: '0.07em' },
+            input: { background: 'var(--navy-card)', borderColor: 'var(--white-15)', color: 'white' },
+          }}
         />
         <ColorInput
           label="Farbe"
@@ -90,6 +105,11 @@ export function TagEditModal({ tag, opened, onClose, onSaved }: TagEditModalProp
           mb="md"
           value={color}
           onChange={setColor}
+          styles={{
+            label: { color: 'var(--white-40)', fontFamily: '"Montserrat", sans-serif', textTransform: 'uppercase', letterSpacing: '0.07em' },
+            input: { background: 'var(--navy-card)', borderColor: 'var(--white-15)', color: 'white' },
+            dropdown: { background: 'var(--navy-card)', borderColor: 'var(--white-15)' },
+          }}
         />
         {saveError !== null ? (
           <p style={{ color: 'var(--mantine-color-red-6)', fontSize: '0.875rem', marginBottom: '0.75rem' }}>
@@ -97,10 +117,10 @@ export function TagEditModal({ tag, opened, onClose, onSaved }: TagEditModalProp
           </p>
         ) : null}
         <Group justify="flex-end">
-          <Button variant="default" onClick={handleClose} disabled={isSaving}>
+          <Button variant="transparent" onClick={handleClose} disabled={isSaving} styles={{ root: { border: '1px solid var(--white-15)', color: 'var(--white-40)' } }}>
             Abbrechen
           </Button>
-          <Button type="submit" loading={isSaving}>
+          <Button type="submit" loading={isSaving} styles={{ root: { background: 'var(--gold)', color: 'var(--navy)', fontFamily: '"Montserrat", sans-serif', fontWeight: 700 } }}>
             Speichern
           </Button>
         </Group>

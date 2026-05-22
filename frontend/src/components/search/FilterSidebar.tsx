@@ -1,4 +1,4 @@
-import { Badge, Button, Divider, MultiSelect, Paper, Select, Stack, Text, TextInput, Title } from '@mantine/core';
+import { ActionIcon, Badge, Button, Divider, MultiSelect, Select, Stack, Text, TextInput, Title } from '@mantine/core';
 import { IconFilter, IconX } from '@tabler/icons-react';
 
 import type { DocumentSort, Tag } from '../../types/document';
@@ -17,6 +17,7 @@ interface FilterSidebarProps {
   values: FilterValues;
   onChange: (values: FilterValues) => void;
   onReset: () => void;
+  onClose?: () => void;
 }
 
 const sortOptions: Array<{ value: DocumentSort; label: string }> = [
@@ -27,7 +28,25 @@ const sortOptions: Array<{ value: DocumentSort; label: string }> = [
   { value: 'created_desc', label: 'Neueste zuerst' },
 ];
 
-export function FilterSidebar({ tags, isLoading, values, onChange, onReset }: FilterSidebarProps): React.ReactElement {
+const fieldStyles = {
+  label: {
+    color: 'var(--white-40)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.07em',
+    fontSize: '10px',
+    fontFamily: '"Montserrat", sans-serif',
+  },
+  input: {
+    background: 'var(--navy-card)',
+    border: '1px solid var(--white-15)',
+    color: 'white',
+    '&::placeholder': {
+      color: 'var(--white-40)',
+    },
+  },
+};
+
+export function FilterSidebar({ tags, isLoading, values, onChange, onReset, onClose }: FilterSidebarProps): React.ReactElement {
   const tagOptions = tags.map((tag) => ({
     value: tag.name,
     label: `${tag.name} (${tag.document_count})`,
@@ -41,75 +60,105 @@ export function FilterSidebar({ tags, isLoading, values, onChange, onReset }: Fi
   }
 
   return (
-    <Paper
-      radius="xl"
-      p="md"
-      withBorder
-      style={{
-        borderColor: 'rgba(127, 90, 240, 0.2)',
-        background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 244, 255, 0.95) 100%)',
-      }}
-    >
-      <Stack gap="md">
-        <Stack gap={2}>
-          <Badge variant="light" color="grape" w="fit-content">
-            Filteroptionen
-          </Badge>
-          <Title order={2} size="h3">
-            Filter
-          </Title>
-          <Text size="sm" c="dimmed">
-            Suche nach Tags, Typ und Dokumentdatum eingrenzen.
-          </Text>
-        </Stack>
-
-        <Divider />
-
-        <MultiSelect
-          label="Tags"
-          placeholder="Tags auswaehlen"
-          data={tagOptions}
-          searchable
-          clearable
-          leftSection={<IconFilter size={16} />}
-          value={values.selectedTags}
-          onChange={(selectedTags) => patchValues({ selectedTags })}
-          disabled={isLoading}
-        />
-
-        <TextInput
-          label="Dokumenttyp"
-          placeholder="z. B. rechnung"
-          value={values.documentType}
-          onChange={(event) => patchValues({ documentType: event.currentTarget.value })}
-        />
-
-        <TextInput
-          label="Datum von"
-          type="date"
-          value={values.dateFrom}
-          onChange={(event) => patchValues({ dateFrom: event.currentTarget.value })}
-        />
-
-        <TextInput
-          label="Datum bis"
-          type="date"
-          value={values.dateTo}
-          onChange={(event) => patchValues({ dateTo: event.currentTarget.value })}
-        />
-
-        <Select
-          label="Sortierung"
-          data={sortOptions}
-          value={values.sort}
-          allowDeselect={false}
-          onChange={(sort) => patchValues({ sort: (sort as DocumentSort | null) ?? 'date_desc' })}
-        />
-
-        <Button variant="light" color="gray" leftSection={<IconX size={16} />} onClick={onReset}>
-          Filter zuruecksetzen
-        </Button>
+    <Stack gap="md" style={{ height: '100%' }}>
+      <Stack gap={2}>
+        <ActionIcon variant="transparent" c="var(--white-70)" aria-label="Filter schliessen" onClick={onClose}>
+          <IconX size={18} />
+        </ActionIcon>
+        <Badge
+          w="fit-content"
+          styles={{
+            root: {
+              background: 'var(--white-15)',
+              color: 'var(--gold)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              fontFamily: '"Montserrat", sans-serif',
+            },
+          }}
+        >
+          Filteroptionen
+        </Badge>
+        <Title order={2} size="h3" c="white" style={{ fontFamily: '"Montserrat", sans-serif' }}>
+          Filter
+        </Title>
+        <Text size="sm" c="var(--white-70)">
+          Suche nach Tags, Typ und Dokumentdatum eingrenzen.
+        </Text>
       </Stack>
-    </Paper>
+
+      <Divider color="var(--white-15)" />
+
+      <MultiSelect
+        label="Tags"
+        placeholder="Tags auswaehlen"
+        data={tagOptions}
+        searchable
+        clearable
+        leftSection={<IconFilter size={16} />}
+        value={values.selectedTags}
+        onChange={(selectedTags) => patchValues({ selectedTags })}
+        disabled={isLoading}
+        styles={{
+          ...fieldStyles,
+          dropdown: { background: 'var(--navy-card)', border: '1px solid var(--white-15)' },
+          option: { color: 'var(--white-70)' },
+          pill: { background: 'var(--white-15)', color: 'var(--white-70)' },
+        }}
+      />
+
+      <TextInput
+        label="Dokumenttyp"
+        placeholder="z. B. rechnung"
+        value={values.documentType}
+        onChange={(event) => patchValues({ documentType: event.currentTarget.value })}
+        styles={fieldStyles}
+      />
+
+      <TextInput
+        label="Datum von"
+        type="date"
+        value={values.dateFrom}
+        onChange={(event) => patchValues({ dateFrom: event.currentTarget.value })}
+        styles={fieldStyles}
+      />
+
+      <TextInput
+        label="Datum bis"
+        type="date"
+        value={values.dateTo}
+        onChange={(event) => patchValues({ dateTo: event.currentTarget.value })}
+        styles={fieldStyles}
+      />
+
+      <Select
+        label="Sortierung"
+        data={sortOptions}
+        value={values.sort}
+        allowDeselect={false}
+        onChange={(sort) => patchValues({ sort: (sort as DocumentSort | null) ?? 'date_desc' })}
+        styles={{
+          ...fieldStyles,
+          dropdown: { background: 'var(--navy-card)', border: '1px solid var(--white-15)' },
+          option: { color: 'var(--white-70)' },
+        }}
+      />
+
+      <Button
+        variant="transparent"
+        leftSection={<IconX size={16} />}
+        onClick={onReset}
+        styles={{
+          root: {
+            border: '1px solid var(--white-15)',
+            color: 'var(--white-40)',
+            fontFamily: '"Montserrat", sans-serif',
+            fontWeight: 700,
+          },
+        }}
+      >
+        Filter zuruecksetzen
+      </Button>
+    </Stack>
   );
 }
