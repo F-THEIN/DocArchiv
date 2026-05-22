@@ -75,10 +75,10 @@ export function DocArchivAppShell(): React.ReactElement {
     >
       <MantineAppShell.Header>
         <Group h="100%" px={{ base: 'sm', sm: 'lg' }} justify="space-between" wrap="nowrap">
-          <Group gap="sm" wrap="nowrap" style={{ flex: 1, minWidth: 0 }}>
+          <Group gap="sm" wrap="nowrap" style={{ flex: 1 }} miw={0}>
             <Burger opened={mobileOpened} onClick={toggleMobile} hiddenFrom="md" size="sm" />
             <Burger opened={desktopOpened} onClick={toggleDesktop} visibleFrom="md" size="sm" />
-            <Stack gap={0} style={{ minWidth: 0 }}>
+            <Stack gap={0} miw={0}>
               <Group gap="xs">
                 <Title order={1} size="h2">
                   DocArchiv
@@ -96,7 +96,6 @@ export function DocArchivAppShell(): React.ReactElement {
           <Tooltip label="Aktualisieren" hiddenFrom="sm">
             <ActionIcon
               variant="light"
-              hiddenFrom="sm"
               aria-label="Aktualisieren"
               onClick={() => void documentsState.reload()}
               loading={documentsState.isLoading}
