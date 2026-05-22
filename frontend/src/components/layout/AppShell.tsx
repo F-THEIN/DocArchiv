@@ -1,4 +1,4 @@
-import { ActionIcon, AppShell as MantineAppShell, Badge, Burger, Button, Group, Stack, Text, Title } from '@mantine/core';
+import { ActionIcon, AppShell as MantineAppShell, Badge, Burger, Button, Group, Stack, Text, Title, Tooltip } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconRefresh } from '@tabler/icons-react';
 import { useState } from 'react';
@@ -93,15 +93,17 @@ export function DocArchivAppShell(): React.ReactElement {
             </Stack>
           </Group>
 
-          <ActionIcon
-            variant="light"
-            hiddenFrom="sm"
-            aria-label="Aktualisieren"
-            onClick={() => void documentsState.reload()}
-            loading={documentsState.isLoading}
-          >
-            <IconRefresh size={16} />
-          </ActionIcon>
+          <Tooltip label="Aktualisieren" hiddenFrom="sm">
+            <ActionIcon
+              variant="light"
+              hiddenFrom="sm"
+              aria-label="Aktualisieren"
+              onClick={() => void documentsState.reload()}
+              loading={documentsState.isLoading}
+            >
+              <IconRefresh size={16} />
+            </ActionIcon>
+          </Tooltip>
           <Button
             variant="light"
             leftSection={<IconRefresh size={16} />}
