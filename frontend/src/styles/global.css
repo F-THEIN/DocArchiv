@@ -1,0 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Open+Sans:wght@400;600&display=swap');
+
+:root {
+  --navy: #0f1f3d;
+  --navy-mid: #162847;
+  --navy-card: #1a2e52;
+  --gold: #e8b84b;
+  --white-70: rgba(255, 255, 255, 0.7);
+  --white-40: rgba(255, 255, 255, 0.4);
+  --white-15: rgba(255, 255, 255, 0.12);
+  --red: #e74c3c;
+  --blue: #3b9de8;
+  --teal: #1abc9c;
+}
+
+body {
+  background: var(--navy);
+}

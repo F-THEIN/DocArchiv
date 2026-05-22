@@ -5,6 +5,7 @@ import { Notifications } from '@mantine/notifications';
 import '@mantine/core/styles.css';
 import '@mantine/dates/styles.css';
 import '@mantine/notifications/styles.css';
+import './styles/global.css';
 
 import { App } from './App';
 import { theme } from './theme';
@@ -17,7 +18,7 @@ if (rootElement === null) {
 
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
-    <MantineProvider theme={theme} defaultColorScheme="light">
+    <MantineProvider theme={theme} defaultColorScheme="dark">
       <Notifications position="top-right" />
       <App />
     </MantineProvider>

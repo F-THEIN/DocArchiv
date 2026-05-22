@@ -26,63 +26,81 @@ function formatOptionalDate(value: string | null): string {
 
 export function DocumentDetail({ document, opened, onClose }: DocumentDetailProps): React.ReactElement {
   return (
-    <Drawer opened={opened} onClose={onClose} position="right" size="lg" title="Dokumentdetails">
+    <Drawer
+      opened={opened}
+      onClose={onClose}
+      position="right"
+      size="lg"
+      title="Dokumentdetails"
+      styles={{
+        content: { background: 'var(--navy-mid)', color: 'white' },
+        header: { background: 'var(--navy-mid)', borderBottom: '1px solid var(--white-15)' },
+        title: { color: 'white', fontFamily: '"Montserrat", sans-serif', fontWeight: 800 },
+        close: { color: 'var(--white-70)' },
+      }}
+    >
       {document === null ? null : (
         <Stack gap="lg">
           <Stack gap="xs">
-            <Title order={2}>{document.title}</Title>
-            <Text c="dimmed">{document.original_filename}</Text>
+            <Title order={2} c="white" style={{ fontFamily: '"Montserrat", sans-serif' }}>
+              {document.title}
+            </Title>
+            <Text c="var(--white-40)">{document.original_filename}</Text>
             <Group gap="xs">
-              <Badge variant="light">{document.document_type}</Badge>
-              <Badge color="gray" variant="outline">
+              <Badge styles={{ root: { background: 'var(--white-15)', color: 'var(--white-70)' } }}>{document.document_type}</Badge>
+              <Badge styles={{ root: { borderColor: 'var(--white-15)', color: 'var(--white-40)' } }} variant="outline">
                 {formatOptionalDate(document.document_date)}
               </Badge>
             </Group>
           </Stack>
 
           <Stack gap="xs">
-            <Title order={3} size="h4">
+            <Title order={3} size="h4" c="white" style={{ fontFamily: '"Montserrat", sans-serif' }}>
               Zusammenfassung
             </Title>
-            <Text>{document.summary || 'Keine Zusammenfassung vorhanden.'}</Text>
+            <Text c="var(--white-70)">{document.summary || 'Keine Zusammenfassung vorhanden.'}</Text>
           </Stack>
 
           <Stack gap="xs">
-            <Title order={3} size="h4">
+            <Title order={3} size="h4" c="white" style={{ fontFamily: '"Montserrat", sans-serif' }}>
               Tags
             </Title>
             <Group gap="xs">
               {document.tags.length > 0 ? (
                 document.tags.map((tag) => (
-                  <Badge key={tag.id} color={tag.color ?? 'blue'} variant="dot">
+                  <Badge key={tag.id} styles={{ root: { background: 'var(--white-15)', color: 'var(--white-70)' } }}>
                     {tag.name}
                   </Badge>
                 ))
               ) : (
-                <Text c="dimmed">Keine Tags vergeben.</Text>
+                <Text c="var(--white-40)">Keine Tags vergeben.</Text>
               )}
             </Group>
           </Stack>
 
           <Stack gap="xs">
-            <Title order={3} size="h4">
+            <Title order={3} size="h4" c="white" style={{ fontFamily: '"Montserrat", sans-serif' }}>
               Ablage
             </Title>
             <List spacing="xs">
               <List.Item>
-                <Text span fw={600}>
+                <Text span fw={600} c="var(--white-70)">
                   Gespeicherter Dateiname:{' '}
                 </Text>
-                {document.stored_filename}
+                <Text span c="var(--white-40)">
+                  {document.stored_filename}
+                </Text>
               </List.Item>
               <List.Item>
-                <Text span fw={600}>
+                <Text span fw={600} c="var(--white-70)">
                   Nextcloud-Pfad:{' '}
                 </Text>
-                {document.nextcloud_path}
+                <Text span c="var(--white-40)">
+                  {document.nextcloud_path}
+                </Text>
               </List.Item>
               <List.Item>
-                <Anchor href={document.nextcloud_url} target="_blank" rel="noreferrer">
+                <Anchor href={document.nextcloud_url} target="_blank" rel="noreferrer" c="var(--gold)">
                   <Group gap={6} component="span">
                     In Nextcloud oeffnen
                     <IconExternalLink size={16} />
@@ -93,13 +111,13 @@ export function DocumentDetail({ document, opened, onClose }: DocumentDetailProp
           </Stack>
 
           <Stack gap="xs">
-            <Title order={3} size="h4">
+            <Title order={3} size="h4" c="white" style={{ fontFamily: '"Montserrat", sans-serif' }}>
               Metadaten
             </Title>
-            <Text size="sm" c="dimmed">
+            <Text size="sm" c="var(--white-40)">
               Erstellt: {formatDateTime(document.created_at)}
             </Text>
-            <Text size="sm" c="dimmed">
+            <Text size="sm" c="var(--white-40)">
               Aktualisiert: {formatDateTime(document.updated_at)}
             </Text>
           </Stack>

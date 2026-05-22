@@ -1,16 +1,17 @@
 import { createTheme, rem } from '@mantine/core';
 
 export const theme = createTheme({
-  primaryColor: 'orange',
-  fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  primaryColor: 'yellow',
+  primaryShade: 5,
+  fontFamily: '"Open Sans", sans-serif',
   headings: {
-    fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    fontFamily: '"Montserrat", sans-serif',
     fontWeight: '800',
   },
   defaultGradient: {
-    from: 'orange.5',
-    to: 'pink.5',
-    deg: 120,
+    from: 'yellow.5',
+    to: 'yellow.7',
+    deg: 90,
   },
   radius: {
     xs: rem(4),

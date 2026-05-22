@@ -28,16 +28,16 @@ export function SearchBar({ value, onSearch }: SearchBarProps): React.ReactEleme
     <Paper
       component="form"
       withBorder
-      radius="xl"
+      radius={16}
       p="md"
-      shadow="sm"
       onSubmit={handleSubmit}
       style={{
-        borderColor: 'rgba(255, 122, 24, 0.25)',
-        background: 'linear-gradient(160deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 245, 232, 0.92) 100%)',
+        borderColor: 'var(--white-15)',
+        background: 'var(--navy-mid)',
+        boxShadow: '0 10px 20px rgba(0, 0, 0, 0.35)',
       }}
     >
-      <Group align="flex-end" gap="sm">
+      <Group align="flex-end" gap="sm" wrap="wrap">
         <TextInput
           flex={1}
           label="Volltextsuche"
@@ -45,11 +45,53 @@ export function SearchBar({ value, onSearch }: SearchBarProps): React.ReactEleme
           leftSection={<IconSearch size={18} />}
           value={draftValue}
           onChange={(event) => setDraftValue(event.currentTarget.value)}
+          styles={{
+            label: {
+              color: 'var(--white-40)',
+              fontFamily: '"Montserrat", sans-serif',
+              textTransform: 'uppercase',
+              letterSpacing: '0.07em',
+              fontSize: '10px',
+            },
+            input: {
+              background: 'var(--navy-card)',
+              border: '1.5px solid var(--white-15)',
+              color: 'white',
+              fontFamily: '"Open Sans", sans-serif',
+              '&::placeholder': { color: 'var(--white-40)' },
+              '&:focus': { borderColor: 'var(--gold)' },
+            },
+            section: { color: 'var(--white-40)' },
+          }}
         />
-        <Button type="submit" variant="gradient" gradient={{ from: 'orange.5', to: 'pink.5', deg: 120 }} leftSection={<IconSearch size={16} />}>
+        <Button
+          type="submit"
+          leftSection={<IconSearch size={16} />}
+          styles={{
+            root: {
+              background: 'var(--gold)',
+              color: 'var(--navy)',
+              fontFamily: '"Montserrat", sans-serif',
+              fontWeight: 700,
+              border: '1px solid transparent',
+            },
+          }}
+        >
           Suchen
         </Button>
-        <Button variant="light" color="gray" leftSection={<IconX size={16} />} onClick={handleClear}>
+        <Button
+          variant="transparent"
+          leftSection={<IconX size={16} />}
+          onClick={handleClear}
+          styles={{
+            root: {
+              color: 'var(--white-40)',
+              border: '1px solid var(--white-15)',
+              fontFamily: '"Montserrat", sans-serif',
+              fontWeight: 700,
+            },
+          }}
+        >
           Zuruecksetzen
         </Button>
       </Group>

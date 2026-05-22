@@ -1,20 +1,18 @@
 import {
   ActionIcon,
   AppShell as MantineAppShell,
-  Badge,
-  Burger,
-  Button,
+  Box,
   Group,
+  SimpleGrid,
   Stack,
   Text,
   Title,
-  Tooltip,
-  alpha,
+  UnstyledButton,
   useMantineTheme,
 } from '@mantine/core';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
-import { IconRefresh } from '@tabler/icons-react';
-import { useState } from 'react';
+import { IconAdjustmentsHorizontal, IconArchive, IconRefresh, IconSearch, IconTags } from '@tabler/icons-react';
+import { useMemo, useState } from 'react';
 
 import { useDocuments } from '../../hooks/useDocuments';
 import { useTags } from '../../hooks/useTags';
@@ -24,15 +22,29 @@ import { FilterSidebar, type FilterValues } from '../search/FilterSidebar';
 import { TagEditModal } from '../tags/TagEditModal';
 
 export function DocArchivAppShell(): React.ReactElement {
-  const [mobileOpened, { toggle: toggleMobile }] = useDisclosure(false);
-  const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true);
+  const [mobileOpened, { toggle: toggleMobile, close: closeMobile }] = useDisclosure(false);
+  const [desktopOpened, { toggle: toggleDesktop, close: closeDesktop }] = useDisclosure(true);
   const [selectedDocument, setSelectedDocument] = useState<DocumentSummary | null>(null);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
+  const [activeNavItem, setActiveNavItem] = useState<'archiv' | 'suche' | 'tags' | 'filter'>('archiv');
   const theme = useMantineTheme();
   const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
   const documentsState = useDocuments();
   const tagsState = useTags();
   const refreshLabel = 'Aktualisieren';
+  const documentCount = documentsState.pagination?.total ?? documentsState.documents.length;
+  const latestUploadMonth = useMemo(() => {
+    if (documentsState.documents.length === 0) {
+      return '—';
+    }
+
+    const latestDate = documentsState.documents.reduce<Date>((latest, document) => {
+      const documentDate = new Date(document.created_at);
+      return documentDate > latest ? documentDate : latest;
+    }, new Date(documentsState.documents[0].created_at));
+
+    return new Intl.DateTimeFormat('de-DE', { month: 'long', year: 'numeric' }).format(latestDate);
+  }, [documentsState.documents]);
 
   const filters: FilterValues = {
     selectedTags: documentsState.query.tags ?? [],
@@ -95,79 +107,120 @@ export function DocArchivAppShell(): React.ReactElement {
     await documentsState.reload();
   }
 
+  function handleFilterNavigation(): void {
+    setActiveNavItem('filter');
+    if (isMobile) {
+      toggleMobile();
+      return;
+    }
+    toggleDesktop();
+  }
+
+  function handleMainNavigation(item: 'archiv' | 'suche' | 'tags'): void {
+    setActiveNavItem(item);
+    closeMobile();
+    closeDesktop();
+  }
+
   return (
     <MantineAppShell
-      header={{ height: { base: 96, sm: 72 } }}
+      header={{ height: { base: 196, sm: 180 } }}
       navbar={{
         width: 320,
         breakpoint: 'md',
         collapsed: { mobile: !mobileOpened, desktop: !desktopOpened },
       }}
-      padding="lg"
+      footer={{ height: 72 }}
+      padding="md"
       styles={{
         main: {
-          background:
-            'radial-gradient(circle at top right, rgba(255, 179, 71, 0.22), transparent 45%), linear-gradient(180deg, #fffaf3 0%, #f8f9ff 100%)',
+          background: 'var(--navy)',
+          paddingBottom: 'calc(72px + var(--mantine-spacing-md))',
         },
         header: {
-          background: 'linear-gradient(120deg, #ff7a18 0%, #ff5f6d 55%, #7f5af0 100%)',
-          borderBottom: 'none',
+          background: 'linear-gradient(160deg, #0a1628, #1a3060, #0f2040)',
+          borderBottom: '1px solid var(--white-15)',
           color: 'white',
-          boxShadow: '0 10px 24px rgba(127, 90, 240, 0.25)',
+          boxShadow: '0 12px 24px rgba(0, 0, 0, 0.4)',
         },
         navbar: {
-          background: alpha('#ffffff', 0.9),
-          backdropFilter: 'blur(10px)',
-          borderRight: `1px solid ${alpha(theme.colors.orange[4], 0.25)}`,
+          background: 'var(--navy-mid)',
+          borderRight: '1px solid var(--white-15)',
+        },
+        footer: {
+          position: 'sticky',
+          bottom: 0,
+          background: 'linear-gradient(0deg, #08132a, #0f1f3d)',
+          borderTop: '1px solid var(--white-15)',
         },
       }}
     >
       <MantineAppShell.Header>
-        <Group h="100%" px={{ base: 'sm', sm: 'lg' }} justify="space-between" wrap="nowrap">
-          <Group gap="sm" wrap="nowrap" flex={1} miw={0}>
-            <Burger opened={mobileOpened} onClick={toggleMobile} hiddenFrom="md" size="sm" />
-            <Burger opened={desktopOpened} onClick={toggleDesktop} visibleFrom="md" size="sm" />
-            <Stack gap={0} miw={0}>
-              <Group gap="xs">
-                <Title order={1} size="h2">
-                  DocArchiv
-                </Title>
-                <Badge variant="filled" color="grape" visibleFrom="xs">
-                  Dokument-Archiv
-                </Badge>
-              </Group>
-              <Text size="sm" c="white" visibleFrom="sm" truncate>
-                Lebendiger Dokumenten-Index mit schneller Uebersicht
+        <Stack h="100%" px={{ base: 'sm', sm: 'lg' }} py="sm" gap="sm" justify="space-between">
+          <Group justify="space-between" wrap="nowrap" align="center">
+            <Title order={1} size="h2" fw={900} style={{ fontFamily: '"Montserrat", sans-serif', letterSpacing: '0.01em' }}>
+              <Text span c="white">
+                Doc
               </Text>
-            </Stack>
-          </Group>
-
-          {isMobile ? (
-            <Tooltip label={refreshLabel} withArrow>
-              <ActionIcon
-                variant="white"
-                color="violet"
-                aria-label={refreshLabel}
-                aria-busy={documentsState.isLoading}
-                onClick={() => void documentsState.reload()}
-                loading={documentsState.isLoading}
-              >
-                <IconRefresh size={16} />
-              </ActionIcon>
-            </Tooltip>
-          ) : (
-            <Button
-              variant="white"
-              color="violet"
-              leftSection={<IconRefresh size={16} />}
+              <Text span c="var(--gold)">
+                Archiv
+              </Text>
+            </Title>
+            <ActionIcon
+              variant="subtle"
+              aria-label={refreshLabel}
               aria-busy={documentsState.isLoading}
               onClick={() => void documentsState.reload()}
               loading={documentsState.isLoading}
+              c="var(--gold)"
             >
-              {refreshLabel}
-            </Button>
-          )}
-        </Group>
+              <IconRefresh size={18} />
+            </ActionIcon>
+          </Group>
+
+          <Group
+            wrap="nowrap"
+            gap={0}
+            style={{
+              border: '1px solid var(--white-15)',
+              borderRadius: 14,
+              background: 'var(--white-15)',
+              overflow: 'hidden',
+            }}
+          >
+            <SimpleGrid cols={3} spacing={0} style={{ width: '100%' }}>
+              <Stack gap={2} p="xs" ta="center" style={{ background: 'rgba(15, 31, 61, 0.55)' }}>
+                <Text c="var(--gold)" fw={800} size="lg" style={{ fontFamily: '"Montserrat", sans-serif' }}>
+                  {documentCount}
+                </Text>
+                <Text size="10px" c="var(--white-40)" tt="uppercase" style={{ letterSpacing: '0.07em' }}>
+                  Anzahl Dokumente
+                </Text>
+              </Stack>
+              <Stack
+                gap={2}
+                p="xs"
+                ta="center"
+                style={{ background: 'rgba(15, 31, 61, 0.55)', borderLeft: '1px solid var(--white-15)', borderRight: '1px solid var(--white-15)' }}
+              >
+                <Text c="var(--gold)" fw={800} size="lg" style={{ fontFamily: '"Montserrat", sans-serif' }}>
+                  {tagsState.tags.length}
+                </Text>
+                <Text size="10px" c="var(--white-40)" tt="uppercase" style={{ letterSpacing: '0.07em' }}>
+                  Anzahl Tags
+                </Text>
+              </Stack>
+              <Stack gap={2} p="xs" ta="center" style={{ background: 'rgba(15, 31, 61, 0.55)' }}>
+                <Text c="var(--gold)" fw={800} size="lg" style={{ fontFamily: '"Montserrat", sans-serif' }}>
+                  {latestUploadMonth}
+                </Text>
+                <Text size="10px" c="var(--white-40)" tt="uppercase" style={{ letterSpacing: '0.07em' }}>
+                  Letzter Upload
+                </Text>
+              </Stack>
+            </SimpleGrid>
+          </Group>
+        </Stack>
       </MantineAppShell.Header>
 
       <MantineAppShell.Navbar p="md">
@@ -177,6 +230,10 @@ export function DocArchivAppShell(): React.ReactElement {
           values={filters}
           onChange={handleFilterChange}
           onReset={handleResetFilters}
+          onClose={() => {
+            closeMobile();
+            closeDesktop();
+          }}
         />
       </MantineAppShell.Navbar>
 
@@ -200,6 +257,46 @@ export function DocArchivAppShell(): React.ReactElement {
           onEditTag={handleEditTag}
         />
       </MantineAppShell.Main>
+
+      <MantineAppShell.Footer px="xs" py="xs">
+        <Group justify="space-around" wrap="nowrap">
+          {[
+            { key: 'archiv', label: 'Archiv', icon: IconArchive },
+            { key: 'suche', label: 'Suche', icon: IconSearch },
+            { key: 'tags', label: 'Tags', icon: IconTags },
+            { key: 'filter', label: 'Filter', icon: IconAdjustmentsHorizontal },
+          ].map((item) => {
+            const isActive = activeNavItem === item.key;
+            const Icon = item.icon;
+
+            return (
+              <UnstyledButton
+                key={item.key}
+                onClick={() =>
+                  item.key === 'filter'
+                    ? handleFilterNavigation()
+                    : handleMainNavigation(item.key as 'archiv' | 'suche' | 'tags')
+                }
+                style={{ minWidth: 64 }}
+              >
+                <Stack align="center" gap={2}>
+                  <Box h={2} w={20} style={{ borderRadius: 99, background: isActive ? 'var(--gold)' : 'transparent' }} />
+                  <Icon size={16} color={isActive ? '#ffffff' : 'rgba(255,255,255,0.4)'} />
+                  <Text
+                    size="10px"
+                    tt="uppercase"
+                    fw={700}
+                    c={isActive ? 'white' : 'var(--white-40)'}
+                    style={{ fontFamily: '"Montserrat", sans-serif', letterSpacing: '0.07em' }}
+                  >
+                    {item.label}
+                  </Text>
+                </Stack>
+              </UnstyledButton>
+            );
+          })}
+        </Group>
+      </MantineAppShell.Footer>
 
       <TagEditModal
         tag={editingTag}
