@@ -15,6 +15,7 @@ export function DocArchivAppShell(): React.ReactElement {
   const [selectedDocument, setSelectedDocument] = useState<DocumentSummary | null>(null);
   const documentsState = useDocuments();
   const tagsState = useTags();
+  const refreshLabel = 'Aktualisieren';
 
   const filters: FilterValues = {
     selectedTags: documentsState.query.tags ?? [],
@@ -93,10 +94,11 @@ export function DocArchivAppShell(): React.ReactElement {
             </Stack>
           </Group>
 
-          <Tooltip label="Aktualisieren" hiddenFrom="sm">
+          <Tooltip label={refreshLabel} hiddenFrom="sm">
             <ActionIcon
               variant="light"
-              aria-label="Aktualisieren"
+              aria-label={refreshLabel}
+              aria-busy={documentsState.isLoading}
               onClick={() => void documentsState.reload()}
               loading={documentsState.isLoading}
             >
@@ -107,10 +109,11 @@ export function DocArchivAppShell(): React.ReactElement {
             variant="light"
             leftSection={<IconRefresh size={16} />}
             visibleFrom="sm"
+            aria-busy={documentsState.isLoading}
             onClick={() => void documentsState.reload()}
             loading={documentsState.isLoading}
           >
-            Aktualisieren
+            {refreshLabel}
           </Button>
         </Group>
       </MantineAppShell.Header>
