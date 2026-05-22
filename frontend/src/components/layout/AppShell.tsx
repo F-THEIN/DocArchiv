@@ -5,11 +5,9 @@ import { useState } from 'react';
 
 import { useDocuments } from '../../hooks/useDocuments';
 import { useTags } from '../../hooks/useTags';
+import { HomePage } from '../../pages/HomePage';
 import type { DocumentSummary } from '../../types/document';
-import { DocumentDetail } from '../documents/DocumentDetail';
-import { DocumentList } from '../documents/DocumentList';
 import { FilterSidebar, type FilterValues } from '../search/FilterSidebar';
-import { SearchBar } from '../search/SearchBar';
 
 export function DocArchivAppShell(): React.ReactElement {
   const [mobileOpened, { toggle: toggleMobile }] = useDisclosure(false);
@@ -54,6 +52,15 @@ export function DocArchivAppShell(): React.ReactElement {
 
   function handleCloseDocument(): void {
     setSelectedDocument(null);
+  }
+
+  function handleToggleTag(tagName: string): void {
+    const selectedTags = documentsState.query.tags ?? [];
+    const nextTags = selectedTags.includes(tagName)
+      ? selectedTags.filter((selectedTag) => selectedTag !== tagName)
+      : [...selectedTags, tagName];
+
+    documentsState.updateQuery({ tags: nextTags });
   }
 
   return (
@@ -106,21 +113,23 @@ export function DocArchivAppShell(): React.ReactElement {
       </MantineAppShell.Navbar>
 
       <MantineAppShell.Main>
-        <Stack gap="lg">
-          <SearchBar value={documentsState.query.q ?? ''} onSearch={handleSearch} />
-
-          <DocumentList
-            documents={documentsState.documents}
-            pagination={documentsState.pagination}
-            isLoading={documentsState.isLoading}
-            error={documentsState.error}
-            onOpenDocument={handleOpenDocument}
-            onPageChange={(page) => documentsState.updateQuery({ page })}
-            onRetry={() => void documentsState.reload()}
-          />
-
-          <DocumentDetail document={selectedDocument} opened={selectedDocument !== null} onClose={handleCloseDocument} />
-        </Stack>
+        <HomePage
+          documents={documentsState.documents}
+          selectedDocument={selectedDocument}
+          selectedTags={documentsState.query.tags ?? []}
+          isLoadingDocuments={documentsState.isLoading}
+          documentError={documentsState.error}
+          tagError={tagsState.error}
+          pagination={documentsState.pagination}
+          searchValue={documentsState.query.q ?? ''}
+          tags={tagsState.tags}
+          onSearch={handleSearch}
+          onOpenDocument={handleOpenDocument}
+          onCloseDocument={handleCloseDocument}
+          onPageChange={(page) => documentsState.updateQuery({ page })}
+          onRetryDocuments={() => void documentsState.reload()}
+          onToggleTag={handleToggleTag}
+        />
       </MantineAppShell.Main>
     </MantineAppShell>
   );
