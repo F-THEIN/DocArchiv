@@ -1,4 +1,16 @@
-import { ActionIcon, AppShell as MantineAppShell, Badge, Burger, Button, Group, Stack, Text, Title, Tooltip } from '@mantine/core';
+import {
+  ActionIcon,
+  AppShell as MantineAppShell,
+  Badge,
+  Burger,
+  Button,
+  Group,
+  Stack,
+  Text,
+  Title,
+  Tooltip,
+  useMantineTheme,
+} from '@mantine/core';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import { IconRefresh } from '@tabler/icons-react';
 import { useState } from 'react';
@@ -13,7 +25,8 @@ export function DocArchivAppShell(): React.ReactElement {
   const [mobileOpened, { toggle: toggleMobile }] = useDisclosure(false);
   const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true);
   const [selectedDocument, setSelectedDocument] = useState<DocumentSummary | null>(null);
-  const isMobile = useMediaQuery('(max-width: 47.99em)');
+  const theme = useMantineTheme();
+  const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
   const documentsState = useDocuments();
   const tagsState = useTags();
   const refreshLabel = 'Aktualisieren';
@@ -96,7 +109,7 @@ export function DocArchivAppShell(): React.ReactElement {
           </Group>
 
           {isMobile ? (
-            <Tooltip label={refreshLabel}>
+            <Tooltip label={refreshLabel} withArrow>
               <ActionIcon
                 variant="light"
                 aria-label={refreshLabel}
