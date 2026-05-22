@@ -13,7 +13,7 @@ function getTypeVisuals(type: string): { stripe: string; badgeColor: string; tag
 
   if (normalizedType === 'antrag') {
     return {
-      stripe: 'linear-gradient(90deg, #c0392b, #e74c3c)',
+      stripe: 'linear-gradient(90deg, #c0392b, var(--red))',
       badgeColor: 'var(--red)',
       tagBackground: 'rgba(231, 76, 60, 0.2)',
     };
@@ -21,14 +21,14 @@ function getTypeVisuals(type: string): { stripe: string; badgeColor: string; tag
 
   if (normalizedType === 'bild') {
     return {
-      stripe: 'linear-gradient(90deg, #2563be, #1abc9c)',
+      stripe: 'linear-gradient(90deg, #2563be, var(--teal))',
       badgeColor: 'var(--blue)',
       tagBackground: 'rgba(59, 157, 232, 0.2)',
     };
   }
 
   return {
-    stripe: 'linear-gradient(90deg, #b8962e, #e8b84b)',
+    stripe: 'linear-gradient(90deg, #b8962e, var(--gold))',
     badgeColor: 'var(--gold)',
     tagBackground: 'rgba(232, 184, 75, 0.2)',
   };

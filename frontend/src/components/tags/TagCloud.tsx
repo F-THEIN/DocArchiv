@@ -91,7 +91,7 @@ export function TagCloud({ tags, selectedTags, onToggleTag, onEditTag }: TagClou
                 {tag.name}
                 <Text span c={isSelected ? 'rgba(15,31,61,0.65)' : 'rgba(255,255,255,0.65)'}>
                   {' '}
-                  ·{tag.document_count}
+                  · {tag.document_count}
                 </Text>
               </Badge>
             );

@@ -38,12 +38,12 @@ export function DocArchivAppShell(): React.ReactElement {
       return '—';
     }
 
-    const latestDate = documentsState.documents.reduce<Date>((latest, document) => {
-      const documentDate = new Date(document.created_at);
-      return documentDate > latest ? documentDate : latest;
-    }, new Date(documentsState.documents[0].created_at));
+    const latestTimestamp = documentsState.documents.reduce<number>((latest, document) => {
+      const timestamp = new Date(document.created_at).getTime();
+      return timestamp > latest ? timestamp : latest;
+    }, new Date(documentsState.documents[0].created_at).getTime());
 
-    return new Intl.DateTimeFormat('de-DE', { month: 'long', year: 'numeric' }).format(latestDate);
+    return new Intl.DateTimeFormat('de-DE', { month: 'long', year: 'numeric' }).format(new Date(latestTimestamp));
   }, [documentsState.documents]);
 
   const filters: FilterValues = {
