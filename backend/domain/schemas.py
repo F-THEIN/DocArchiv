@@ -38,6 +38,33 @@ class TagCreate(TagBase):
     """Request-Schema zum Anlegen eines Tags."""
 
 
+class TagUpdate(BaseModel):
+    """Request-Schema fuer teilweise Tag-Updates."""
+
+    name: str | None = Field(default=None, min_length=1, max_length=80)
+    color: str | None = Field(default=None, max_length=32)
+
+    @field_validator("name")
+    @classmethod
+    def normalize_name(cls, value: str | None) -> str | None:
+        """Normalisiert optionalen Tag-Namen auf lowercase ohne umgebende Leerzeichen."""
+        if value is None:
+            return None
+        normalized = value.strip().lower()
+        if not normalized:
+            raise ValueError("Tag-Name darf nicht leer sein.")
+        return normalized
+
+    @field_validator("color")
+    @classmethod
+    def normalize_color(cls, value: str | None) -> str | None:
+        """Normalisiert optionalen Farbwert."""
+        if value is None:
+            return None
+        normalized = value.strip()
+        return normalized or None
+
+
 class TagResponse(TagBase):
     """Response-Schema fuer Tags."""
 

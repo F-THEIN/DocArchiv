@@ -7,6 +7,7 @@ import type {
   PaginatedResponse,
   Tag,
   UpdateDocumentPayload,
+  UpdateTagPayload,
 } from '../types/document';
 
 const API_BASE_PATH = '/api';
@@ -169,6 +170,13 @@ export const apiClient = {
   deleteTag(tagId: number): Promise<void> {
     return request(`/tags/${tagId}`, {
       method: 'DELETE',
+    });
+  },
+
+  updateTag(tagId: number, payload: UpdateTagPayload): Promise<Tag> {
+    return request(`/tags/${tagId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
     });
   },
 

@@ -16,6 +16,7 @@ from domain.schemas import (
     PaginatedResponse,
     TagCreate,
     TagResponse,
+    TagUpdate,
 )
 
 
@@ -80,6 +81,9 @@ class TagRepositoryProtocol(Protocol):
 
     def delete(self, tag: Tag) -> None:
         """Loescht einen Tag."""
+
+    def update(self, tag: Tag) -> Tag:
+        """Aktualisiert einen Tag."""
 
 
 class DocumentService:
@@ -252,3 +256,22 @@ class TagService:
             raise TagNotFoundError(f"Tag mit ID {tag_id} wurde nicht gefunden.")
         self.tag_repository.delete(tag)
         self.session.commit()
+
+    def update_tag(self, tag_id: int, data: TagUpdate) -> TagResponse:
+        """Aktualisiert einen Tag oder wirft einen NotFound-Fehler."""
+        tag = self.tag_repository.get_by_id(tag_id)
+        if tag is None:
+            raise TagNotFoundError(f"Tag mit ID {tag_id} wurde nicht gefunden.")
+
+        update_data = data.model_dump(exclude_unset=True)
+        for field_name, value in update_data.items():
+            setattr(tag, field_name, value)
+
+        updated_tag = self.tag_repository.update(tag)
+        self.session.commit()
+        return TagResponse(
+            id=updated_tag.id,
+            name=updated_tag.name,
+            color=updated_tag.color,
+            document_count=len(updated_tag.documents),
+        )

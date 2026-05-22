@@ -62,3 +62,8 @@ export interface CreateTagPayload {
   name: string;
   color?: string | null;
 }
+
+export interface UpdateTagPayload {
+  name?: string;
+  color?: string | null;
+}
