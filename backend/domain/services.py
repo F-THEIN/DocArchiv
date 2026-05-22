@@ -269,7 +269,6 @@ class TagService:
 
         updated_tag = self.tag_repository.update(tag)
         self.session.commit()
-        self.session.refresh(updated_tag)
         return TagResponse(
             id=updated_tag.id,
             name=updated_tag.name,
