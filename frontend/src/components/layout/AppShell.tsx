@@ -1,5 +1,17 @@
-import { AppShell as MantineAppShell, Badge, Burger, Button, Group, Stack, Text, Title } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
+import {
+  ActionIcon,
+  AppShell as MantineAppShell,
+  Badge,
+  Burger,
+  Button,
+  Group,
+  Stack,
+  Text,
+  Title,
+  Tooltip,
+  useMantineTheme,
+} from '@mantine/core';
+import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import { IconRefresh } from '@tabler/icons-react';
 import { useState } from 'react';
 
@@ -13,8 +25,11 @@ export function DocArchivAppShell(): React.ReactElement {
   const [mobileOpened, { toggle: toggleMobile }] = useDisclosure(false);
   const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true);
   const [selectedDocument, setSelectedDocument] = useState<DocumentSummary | null>(null);
+  const theme = useMantineTheme();
+  const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
   const documentsState = useDocuments();
   const tagsState = useTags();
+  const refreshLabel = 'Aktualisieren';
 
   const filters: FilterValues = {
     selectedTags: documentsState.query.tags ?? [],
@@ -65,7 +80,7 @@ export function DocArchivAppShell(): React.ReactElement {
 
   return (
     <MantineAppShell
-      header={{ height: 72 }}
+      header={{ height: { base: 96, sm: 72 } }}
       navbar={{
         width: 320,
         breakpoint: 'md',
@@ -74,31 +89,48 @@ export function DocArchivAppShell(): React.ReactElement {
       padding="lg"
     >
       <MantineAppShell.Header>
-        <Group h="100%" px="lg" justify="space-between">
-          <Group gap="md">
+        <Group h="100%" px={{ base: 'sm', sm: 'lg' }} justify="space-between" wrap="nowrap">
+          <Group gap="sm" wrap="nowrap" flex={1} miw={0}>
             <Burger opened={mobileOpened} onClick={toggleMobile} hiddenFrom="md" size="sm" />
             <Burger opened={desktopOpened} onClick={toggleDesktop} visibleFrom="md" size="sm" />
-            <Stack gap={0}>
+            <Stack gap={0} miw={0}>
               <Group gap="xs">
                 <Title order={1} size="h2">
                   DocArchiv
                 </Title>
-                <Badge variant="light">SPA</Badge>
+                <Badge variant="light" visibleFrom="xs">
+                  SPA
+                </Badge>
               </Group>
-              <Text size="sm" c="dimmed">
+              <Text size="sm" c="dimmed" visibleFrom="sm" truncate>
                 Durchsuchbarer Index fuer gescannte Dokumente
               </Text>
             </Stack>
           </Group>
 
-          <Button
-            variant="light"
-            leftSection={<IconRefresh size={16} />}
-            onClick={() => void documentsState.reload()}
-            loading={documentsState.isLoading}
-          >
-            Aktualisieren
-          </Button>
+          {isMobile ? (
+            <Tooltip label={refreshLabel} withArrow>
+              <ActionIcon
+                variant="light"
+                aria-label={refreshLabel}
+                aria-busy={documentsState.isLoading}
+                onClick={() => void documentsState.reload()}
+                loading={documentsState.isLoading}
+              >
+                <IconRefresh size={16} />
+              </ActionIcon>
+            </Tooltip>
+          ) : (
+            <Button
+              variant="light"
+              leftSection={<IconRefresh size={16} />}
+              aria-busy={documentsState.isLoading}
+              onClick={() => void documentsState.reload()}
+              loading={documentsState.isLoading}
+            >
+              {refreshLabel}
+            </Button>
+          )}
         </Group>
       </MantineAppShell.Header>
 
