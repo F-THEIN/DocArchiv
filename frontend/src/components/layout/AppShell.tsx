@@ -1,4 +1,4 @@
-import { AppShell as MantineAppShell, Badge, Burger, Button, Group, Stack, Text, Title } from '@mantine/core';
+import { ActionIcon, AppShell as MantineAppShell, Badge, Burger, Button, Group, Stack, Text, Title } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconRefresh } from '@tabler/icons-react';
 import { useState } from 'react';
@@ -65,7 +65,7 @@ export function DocArchivAppShell(): React.ReactElement {
 
   return (
     <MantineAppShell
-      header={{ height: 72 }}
+      header={{ height: { base: 96, sm: 72 } }}
       navbar={{
         width: 320,
         breakpoint: 'md',
@@ -74,26 +74,38 @@ export function DocArchivAppShell(): React.ReactElement {
       padding="lg"
     >
       <MantineAppShell.Header>
-        <Group h="100%" px="lg" justify="space-between">
-          <Group gap="md">
+        <Group h="100%" px={{ base: 'sm', sm: 'lg' }} justify="space-between" wrap="nowrap">
+          <Group gap="sm" wrap="nowrap" style={{ flex: 1, minWidth: 0 }}>
             <Burger opened={mobileOpened} onClick={toggleMobile} hiddenFrom="md" size="sm" />
             <Burger opened={desktopOpened} onClick={toggleDesktop} visibleFrom="md" size="sm" />
-            <Stack gap={0}>
+            <Stack gap={0} style={{ minWidth: 0 }}>
               <Group gap="xs">
                 <Title order={1} size="h2">
                   DocArchiv
                 </Title>
-                <Badge variant="light">SPA</Badge>
+                <Badge variant="light" visibleFrom="xs">
+                  SPA
+                </Badge>
               </Group>
-              <Text size="sm" c="dimmed">
+              <Text size="sm" c="dimmed" visibleFrom="sm" truncate>
                 Durchsuchbarer Index fuer gescannte Dokumente
               </Text>
             </Stack>
           </Group>
 
+          <ActionIcon
+            variant="light"
+            hiddenFrom="sm"
+            aria-label="Aktualisieren"
+            onClick={() => void documentsState.reload()}
+            loading={documentsState.isLoading}
+          >
+            <IconRefresh size={16} />
+          </ActionIcon>
           <Button
             variant="light"
             leftSection={<IconRefresh size={16} />}
+            visibleFrom="sm"
             onClick={() => void documentsState.reload()}
             loading={documentsState.isLoading}
           >
