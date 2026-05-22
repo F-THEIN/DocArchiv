@@ -1,27 +1,20 @@
-import {
-  Alert,
-  AppShell as MantineAppShell,
-  Badge,
-  Burger,
-  Button,
-  Group,
-  Loader,
-  Paper,
-  Stack,
-  Text,
-  Title,
-} from '@mantine/core';
+import { AppShell as MantineAppShell, Badge, Burger, Button, Group, Stack, Text, Title } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconAlertCircle, IconRefresh } from '@tabler/icons-react';
+import { IconRefresh } from '@tabler/icons-react';
+import { useState } from 'react';
 
 import { useDocuments } from '../../hooks/useDocuments';
 import { useTags } from '../../hooks/useTags';
+import type { DocumentSummary } from '../../types/document';
+import { DocumentDetail } from '../documents/DocumentDetail';
+import { DocumentList } from '../documents/DocumentList';
 import { FilterSidebar, type FilterValues } from '../search/FilterSidebar';
 import { SearchBar } from '../search/SearchBar';
 
 export function DocArchivAppShell(): React.ReactElement {
   const [mobileOpened, { toggle: toggleMobile }] = useDisclosure(false);
   const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true);
+  const [selectedDocument, setSelectedDocument] = useState<DocumentSummary | null>(null);
   const documentsState = useDocuments();
   const tagsState = useTags();
 
@@ -53,6 +46,14 @@ export function DocArchivAppShell(): React.ReactElement {
       per_page: 25,
       sort: 'date_desc',
     });
+  }
+
+  function handleOpenDocument(document: DocumentSummary): void {
+    setSelectedDocument(document);
+  }
+
+  function handleCloseDocument(): void {
+    setSelectedDocument(null);
   }
 
   return (
@@ -108,36 +109,17 @@ export function DocArchivAppShell(): React.ReactElement {
         <Stack gap="lg">
           <SearchBar value={documentsState.query.q ?? ''} onSearch={handleSearch} />
 
-          {documentsState.error ? (
-            <Alert color="red" icon={<IconAlertCircle size={18} />} title="Dokumente konnten nicht geladen werden">
-              {documentsState.error}
-            </Alert>
-          ) : null}
+          <DocumentList
+            documents={documentsState.documents}
+            pagination={documentsState.pagination}
+            isLoading={documentsState.isLoading}
+            error={documentsState.error}
+            onOpenDocument={handleOpenDocument}
+            onPageChange={(page) => documentsState.updateQuery({ page })}
+            onRetry={() => void documentsState.reload()}
+          />
 
-          {tagsState.error ? (
-            <Alert color="orange" icon={<IconAlertCircle size={18} />} title="Tags konnten nicht geladen werden">
-              {tagsState.error}
-            </Alert>
-          ) : null}
-
-          <Paper withBorder radius="lg" p="xl">
-            <Stack align="center" gap="sm" py="xl">
-              {documentsState.isLoading ? <Loader /> : null}
-              <Title order={2} size="h3">
-                Dokumentliste wird im naechsten Schritt angebunden
-              </Title>
-              <Text c="dimmed" ta="center" maw={620}>
-                Suche, Filter und API-Hooks sind vorbereitet. Aktuell wurden {documentsState.documents.length}{' '}
-                Dokumente aus der API-Antwort geladen.
-              </Text>
-              {documentsState.pagination ? (
-                <Text size="sm" c="dimmed">
-                  Seite {documentsState.pagination.page} von {documentsState.pagination.pages} ·{' '}
-                  {documentsState.pagination.total} Treffer
-                </Text>
-              ) : null}
-            </Stack>
-          </Paper>
+          <DocumentDetail document={selectedDocument} opened={selectedDocument !== null} onClose={handleCloseDocument} />
         </Stack>
       </MantineAppShell.Main>
     </MantineAppShell>
