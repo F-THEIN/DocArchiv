@@ -1,0 +1,46 @@
+services:
+  docarchiv-db:
+    image: postgres:16-alpine
+    container_name: docarchiv-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-docarchiv}
+      POSTGRES_USER: ${POSTGRES_USER:-docarchiv}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    volumes:
+      - docarchiv-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  docarchiv-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: docarchiv-app
+    restart: unless-stopped
+    depends_on:
+      docarchiv-db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-docarchiv}:${POSTGRES_PASSWORD:-changeme}@docarchiv-db:5432/${POSTGRES_DB:-docarchiv}
+      DOCARCHIV_NC_BASE_URL: ${DOCARCHIV_NC_BASE_URL:-https://nextcloud.example.com/apps/files/?dir=/Documents/Scans}
+      DOCARCHIV_LOG_LEVEL: ${DOCARCHIV_LOG_LEVEL:-INFO}
+      DOCARCHIV_STATIC_DIR: static
+    ports:
+      - "8088:8000"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=5).read()\"",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  docarchiv-db-data:
