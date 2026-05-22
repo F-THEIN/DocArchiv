@@ -10,6 +10,8 @@ interface TagCloudProps {
 }
 
 export function TagCloud({ tags, selectedTags, onToggleTag, onEditTag }: TagCloudProps): React.ReactElement {
+  const editableTag = tags.find((tag) => selectedTags.includes(tag.name)) ?? null;
+
   if (tags.length === 0) {
     return (
       <Stack gap={4} px="xs">
@@ -43,9 +45,13 @@ export function TagCloud({ tags, selectedTags, onToggleTag, onEditTag }: TagClou
               component="button"
               type="button"
               size="11px"
-              c="var(--white-40)"
+              c={editableTag === null ? 'rgba(255,255,255,0.25)' : 'var(--white-40)'}
               style={{ textDecorationColor: 'var(--white-15)' }}
-              onClick={() => onEditTag(tags[0])}
+              onClick={() => {
+                if (editableTag !== null) {
+                  onEditTag(editableTag);
+                }
+              }}
             >
               Tags verwalten
             </Anchor>
