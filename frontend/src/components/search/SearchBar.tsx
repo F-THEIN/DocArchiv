@@ -25,7 +25,18 @@ export function SearchBar({ value, onSearch }: SearchBarProps): React.ReactEleme
   }
 
   return (
-    <Paper component="form" withBorder radius="lg" p="md" onSubmit={handleSubmit}>
+    <Paper
+      component="form"
+      withBorder
+      radius="xl"
+      p="md"
+      shadow="sm"
+      onSubmit={handleSubmit}
+      style={{
+        borderColor: 'rgba(255, 122, 24, 0.25)',
+        background: 'linear-gradient(160deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 245, 232, 0.92) 100%)',
+      }}
+    >
       <Group align="flex-end" gap="sm">
         <TextInput
           flex={1}
@@ -35,10 +46,10 @@ export function SearchBar({ value, onSearch }: SearchBarProps): React.ReactEleme
           value={draftValue}
           onChange={(event) => setDraftValue(event.currentTarget.value)}
         />
-        <Button type="submit" leftSection={<IconSearch size={16} />}>
+        <Button type="submit" variant="gradient" gradient={{ from: 'orange.5', to: 'pink.5', deg: 120 }} leftSection={<IconSearch size={16} />}>
           Suchen
         </Button>
-        <Button variant="subtle" color="gray" leftSection={<IconX size={16} />} onClick={handleClear}>
+        <Button variant="light" color="gray" leftSection={<IconX size={16} />} onClick={handleClear}>
           Zuruecksetzen
         </Button>
       </Group>
