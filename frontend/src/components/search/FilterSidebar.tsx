@@ -53,7 +53,7 @@ export function FilterSidebar({ tags, isLoading, values, onChange, onReset }: Fi
       <Stack gap="md">
         <Stack gap={2}>
           <Badge variant="light" color="grape" w="fit-content">
-            Navigation
+            Filteroptionen
           </Badge>
           <Title order={2} size="h3">
             Filter

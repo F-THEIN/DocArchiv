@@ -13,7 +13,7 @@ import {
   useMantineTheme,
 } from '@mantine/core';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
-import { IconRefresh, IconSparkles } from '@tabler/icons-react';
+import { IconRefresh } from '@tabler/icons-react';
 import { useState } from 'react';
 
 import { useDocuments } from '../../hooks/useDocuments';
@@ -159,7 +159,6 @@ export function DocArchivAppShell(): React.ReactElement {
             <Button
               variant="white"
               color="violet"
-              rightSection={<IconSparkles size={16} />}
               leftSection={<IconRefresh size={16} />}
               aria-busy={documentsState.isLoading}
               onClick={() => void documentsState.reload()}
