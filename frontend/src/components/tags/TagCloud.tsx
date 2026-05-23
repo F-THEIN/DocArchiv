@@ -1,5 +1,5 @@
 import { Anchor, Badge, Box, Group, ScrollArea, Stack, Text } from '@mantine/core';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 import type { Tag } from '../../types/document';
 
@@ -10,18 +10,22 @@ interface TagCloudProps {
   onEditTag?: (tag: Tag) => void;
 }
 
+const MIN_CHIP_TOUCH_WIDTH = 44;
+const MIN_CHIP_TOUCH_HEIGHT = 36;
+
 export function TagCloud({ tags, selectedTags, onToggleTag, onEditTag }: TagCloudProps): React.ReactElement {
   const editableTag = tags.find((tag) => selectedTags.includes(tag.name)) ?? null;
   const tagRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const firstSelectedTagName = useMemo(() => tags.find((tag) => selectedTags.includes(tag.name))?.name, [selectedTags, tags]);
 
   useEffect(() => {
+    const firstSelectedTagName = tags.find((tag) => selectedTags.includes(tag.name))?.name;
+
     if (!firstSelectedTagName) {
       return;
     }
 
     tagRefs.current[firstSelectedTagName]?.scrollIntoView({ behavior: 'smooth', inline: 'nearest' });
-  }, [firstSelectedTagName]);
+  }, [selectedTags, tags]);
 
   if (tags.length === 0) {
     return (
@@ -118,9 +122,9 @@ export function TagCloud({ tags, selectedTags, onToggleTag, onEditTag }: TagClou
                     background: isSelected ? activeColor : 'var(--navy-card)',
                     color: isSelected ? '#0f1f3d' : 'var(--white-40)',
                     width: 'auto',
-                    minWidth: 'max(44px, max-content)',
+                    minWidth: `max(${MIN_CHIP_TOUCH_WIDTH}px, max-content)`,
                     maxWidth: 'none',
-                    minHeight: 36,
+                    minHeight: MIN_CHIP_TOUCH_HEIGHT,
                     padding: '7px 13px',
                     whiteSpace: 'nowrap',
                     overflow: 'visible',

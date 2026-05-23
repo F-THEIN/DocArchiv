@@ -21,6 +21,12 @@ import type { DocumentSummary, Tag } from '../../types/document';
 import { FilterSidebar, type FilterValues } from '../search/FilterSidebar';
 import { TagEditModal } from '../tags/TagEditModal';
 
+const NORMAL_HEADER_HEIGHT_BASE = 196;
+const NORMAL_HEADER_HEIGHT_SM = 180;
+const COMPACT_HEADER_HEIGHT_BASE = 164;
+const COMPACT_HEADER_HEIGHT_SM = 148;
+const COMPACT_STATS_PADDING = 6;
+
 export function DocArchivAppShell(): React.ReactElement {
   const [mobileOpened, { toggle: toggleMobile, close: closeMobile }] = useDisclosure(false);
   const [desktopOpened, { toggle: toggleDesktop, close: closeDesktop }] = useDisclosure(true);
@@ -125,7 +131,12 @@ export function DocArchivAppShell(): React.ReactElement {
 
   return (
     <MantineAppShell
-      header={{ height: { base: useCompactHeader ? 164 : 196, sm: useCompactHeader ? 148 : 180 } }}
+      header={{
+        height: {
+          base: useCompactHeader ? COMPACT_HEADER_HEIGHT_BASE : NORMAL_HEADER_HEIGHT_BASE,
+          sm: useCompactHeader ? COMPACT_HEADER_HEIGHT_SM : NORMAL_HEADER_HEIGHT_SM,
+        },
+      }}
       navbar={{
         width: 320,
         breakpoint: 'md',
@@ -197,7 +208,12 @@ export function DocArchivAppShell(): React.ReactElement {
             }}
           >
             <SimpleGrid cols={3} spacing={0} style={{ width: '100%' }}>
-              <Stack gap={2} p={useCompactHeader ? 6 : 'xs'} ta="center" style={{ background: 'rgba(15, 31, 61, 0.55)' }}>
+              <Stack
+                gap={2}
+                p={useCompactHeader ? COMPACT_STATS_PADDING : 'xs'}
+                ta="center"
+                style={{ background: 'rgba(15, 31, 61, 0.55)' }}
+              >
                 <Text c="var(--gold)" fw={800} size="lg" style={{ fontFamily: '"Montserrat", sans-serif' }}>
                   {documentCount}
                 </Text>
@@ -207,7 +223,7 @@ export function DocArchivAppShell(): React.ReactElement {
               </Stack>
               <Stack
                 gap={2}
-                p={useCompactHeader ? 6 : 'xs'}
+                p={useCompactHeader ? COMPACT_STATS_PADDING : 'xs'}
                 ta="center"
                 style={{ background: 'rgba(15, 31, 61, 0.55)', borderLeft: '1px solid var(--white-15)', borderRight: '1px solid var(--white-15)' }}
               >
@@ -218,7 +234,12 @@ export function DocArchivAppShell(): React.ReactElement {
                   Anzahl Tags
                 </Text>
               </Stack>
-              <Stack gap={2} p={useCompactHeader ? 6 : 'xs'} ta="center" style={{ background: 'rgba(15, 31, 61, 0.55)' }}>
+              <Stack
+                gap={2}
+                p={useCompactHeader ? COMPACT_STATS_PADDING : 'xs'}
+                ta="center"
+                style={{ background: 'rgba(15, 31, 61, 0.55)' }}
+              >
                 <Text c="var(--gold)" fw={800} size="lg" style={{ fontFamily: '"Montserrat", sans-serif' }}>
                   {latestUploadMonth}
                 </Text>
