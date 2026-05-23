@@ -29,6 +29,9 @@ export function DocArchivAppShell(): React.ReactElement {
   const [activeNavItem, setActiveNavItem] = useState<'archiv' | 'suche' | 'tags' | 'filter'>('archiv');
   const theme = useMantineTheme();
   const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
+  const isLandscape = useMediaQuery('(orientation: landscape)');
+  const isLowHeight = useMediaQuery('(max-height: 500px)');
+  const useCompactHeader = isLandscape || isLowHeight;
   const documentsState = useDocuments();
   const tagsState = useTags();
   const refreshLabel = 'Aktualisieren';
@@ -124,7 +127,7 @@ export function DocArchivAppShell(): React.ReactElement {
 
   return (
     <MantineAppShell
-      header={{ height: { base: 196, sm: 180 } }}
+      header={{ height: { base: useCompactHeader ? 164 : 196, sm: useCompactHeader ? 148 : 180 } }}
       navbar={{
         width: 320,
         breakpoint: 'md',
@@ -135,7 +138,7 @@ export function DocArchivAppShell(): React.ReactElement {
       styles={{
         main: {
           background: 'var(--navy)',
-          paddingBottom: 'calc(72px + var(--mantine-spacing-md))',
+          paddingBottom: 'calc(72px + var(--mantine-spacing-md) + env(safe-area-inset-bottom, 0px))',
         },
         header: {
           background: 'linear-gradient(160deg, #0a1628, #1a3060, #0f2040)',
@@ -152,11 +155,18 @@ export function DocArchivAppShell(): React.ReactElement {
           bottom: 0,
           background: 'linear-gradient(0deg, #08132a, #0f1f3d)',
           borderTop: '1px solid var(--white-15)',
+          zIndex: 200,
         },
       }}
     >
       <MantineAppShell.Header>
-        <Stack h="100%" px={{ base: 'sm', sm: 'lg' }} py="sm" gap="sm" justify="space-between">
+        <Stack
+          h="100%"
+          px={{ base: 'sm', sm: 'lg' }}
+          py={useCompactHeader ? 'xs' : 'sm'}
+          gap={useCompactHeader ? 'xs' : 'sm'}
+          justify="space-between"
+        >
           <Group justify="space-between" wrap="nowrap" align="center">
             <Title order={1} size="h2" fw={900} style={{ fontFamily: '"Montserrat", sans-serif', letterSpacing: '0.01em' }}>
               <Text span c="white">
@@ -189,7 +199,7 @@ export function DocArchivAppShell(): React.ReactElement {
             }}
           >
             <SimpleGrid cols={3} spacing={0} style={{ width: '100%' }}>
-              <Stack gap={2} p="xs" ta="center" style={{ background: 'rgba(15, 31, 61, 0.55)' }}>
+              <Stack gap={2} p={useCompactHeader ? 6 : 'xs'} ta="center" style={{ background: 'rgba(15, 31, 61, 0.55)' }}>
                 <Text c="var(--gold)" fw={800} size="lg" style={{ fontFamily: '"Montserrat", sans-serif' }}>
                   {documentCount}
                 </Text>
@@ -199,7 +209,7 @@ export function DocArchivAppShell(): React.ReactElement {
               </Stack>
               <Stack
                 gap={2}
-                p="xs"
+                p={useCompactHeader ? 6 : 'xs'}
                 ta="center"
                 style={{ background: 'rgba(15, 31, 61, 0.55)', borderLeft: '1px solid var(--white-15)', borderRight: '1px solid var(--white-15)' }}
               >
@@ -210,7 +220,7 @@ export function DocArchivAppShell(): React.ReactElement {
                   Anzahl Tags
                 </Text>
               </Stack>
-              <Stack gap={2} p="xs" ta="center" style={{ background: 'rgba(15, 31, 61, 0.55)' }}>
+              <Stack gap={2} p={useCompactHeader ? 6 : 'xs'} ta="center" style={{ background: 'rgba(15, 31, 61, 0.55)' }}>
                 <Text c="var(--gold)" fw={800} size="lg" style={{ fontFamily: '"Montserrat", sans-serif' }}>
                   {latestUploadMonth}
                 </Text>
@@ -258,7 +268,7 @@ export function DocArchivAppShell(): React.ReactElement {
         />
       </MantineAppShell.Main>
 
-      <MantineAppShell.Footer px="xs" py="xs">
+      <MantineAppShell.Footer px="xs" py={`calc(var(--mantine-spacing-xs) + env(safe-area-inset-bottom, 0px))`}>
         <Group justify="space-around" wrap="nowrap">
           {[
             { key: 'archiv', label: 'Archiv', icon: IconArchive },

@@ -1,4 +1,5 @@
-import { Anchor, Badge, Group, ScrollArea, Stack, Text } from '@mantine/core';
+import { Anchor, Badge, Box, Group, ScrollArea, Stack, Text } from '@mantine/core';
+import { useEffect, useMemo, useRef } from 'react';
 
 import type { Tag } from '../../types/document';
 
@@ -11,6 +12,16 @@ interface TagCloudProps {
 
 export function TagCloud({ tags, selectedTags, onToggleTag, onEditTag }: TagCloudProps): React.ReactElement {
   const editableTag = tags.find((tag) => selectedTags.includes(tag.name)) ?? null;
+  const tagRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const selectedTagName = useMemo(() => tags.find((tag) => selectedTags.includes(tag.name))?.name, [selectedTags, tags]);
+
+  useEffect(() => {
+    if (selectedTagName === undefined) {
+      return;
+    }
+
+    tagRefs.current[selectedTagName]?.scrollIntoView({ behavior: 'smooth', inline: 'nearest' });
+  }, [selectedTagName]);
 
   if (tags.length === 0) {
     return (
@@ -63,9 +74,23 @@ export function TagCloud({ tags, selectedTags, onToggleTag, onEditTag }: TagClou
         type="never"
         scrollbarSize={0}
         style={{ width: '100%' }}
-        styles={{ viewport: { paddingBottom: 2, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } }}
+        styles={{
+          viewport: {
+            paddingBottom: 2,
+            scrollbarWidth: 'none',
+            WebkitOverflowScrolling: 'touch',
+            overflowY: 'hidden',
+          },
+        }}
       >
-        <Group gap="xs" wrap="nowrap">
+        <Box
+          style={{
+            display: 'flex',
+            flexWrap: 'nowrap',
+            gap: 'var(--mantine-spacing-xs)',
+            minWidth: 'max-content',
+          }}
+        >
           {tags.map((tag, index) => {
             const isSelected = selectedTags.includes(tag.name);
             const activeColor = index % 3 === 0 ? 'var(--gold)' : index % 3 === 1 ? '#2563be' : 'var(--teal)';
@@ -76,6 +101,9 @@ export function TagCloud({ tags, selectedTags, onToggleTag, onEditTag }: TagClou
                 component="button"
                 type="button"
                 radius="xl"
+                ref={(element) => {
+                  tagRefs.current[tag.name] = element;
+                }}
                 onClick={() => onToggleTag(tag.name)}
                 styles={{
                   root: {
@@ -89,8 +117,18 @@ export function TagCloud({ tags, selectedTags, onToggleTag, onEditTag }: TagClou
                     border: '1px solid var(--white-15)',
                     background: isSelected ? activeColor : 'var(--navy-card)',
                     color: isSelected ? '#0f1f3d' : 'var(--white-40)',
-                    paddingRight: 10,
-                    paddingLeft: 10,
+                    width: 'auto',
+                    minWidth: 'max(44px, max-content)',
+                    maxWidth: 'none',
+                    minHeight: 36,
+                    padding: '7px 13px',
+                    whiteSpace: 'nowrap',
+                    overflow: 'visible',
+                    flexShrink: 0,
+                    lineHeight: 1,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   },
                 }}
               >
@@ -102,7 +140,7 @@ export function TagCloud({ tags, selectedTags, onToggleTag, onEditTag }: TagClou
               </Badge>
             );
           })}
-        </Group>
+        </Box>
       </ScrollArea>
     </Stack>
   );
