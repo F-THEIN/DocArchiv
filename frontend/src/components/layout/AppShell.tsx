@@ -21,6 +21,14 @@ import type { DocumentSummary, Tag } from '../../types/document';
 import { FilterSidebar, type FilterValues } from '../search/FilterSidebar';
 import { TagEditModal } from '../tags/TagEditModal';
 
+const NORMAL_HEADER_HEIGHT_BASE = 196;
+const NORMAL_HEADER_HEIGHT_SM = 180;
+const COMPACT_HEADER_HEIGHT_BASE = 164;
+const COMPACT_HEADER_HEIGHT_SM = 148;
+const COMPACT_STATS_PADDING = 6;
+const COMPACT_MODE_MAX_HEIGHT = 500;
+const BOTTOM_NAV_HEIGHT = 72;
+
 export function DocArchivAppShell(): React.ReactElement {
   const [mobileOpened, { toggle: toggleMobile, close: closeMobile }] = useDisclosure(false);
   const [desktopOpened, { toggle: toggleDesktop, close: closeDesktop }] = useDisclosure(true);
@@ -29,6 +37,7 @@ export function DocArchivAppShell(): React.ReactElement {
   const [activeNavItem, setActiveNavItem] = useState<'archiv' | 'suche' | 'tags' | 'filter'>('archiv');
   const theme = useMantineTheme();
   const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
+  const isCompactHeaderMode = useMediaQuery(`(orientation: landscape), (max-height: ${COMPACT_MODE_MAX_HEIGHT}px)`);
   const documentsState = useDocuments();
   const tagsState = useTags();
   const refreshLabel = 'Aktualisieren';
@@ -124,7 +133,12 @@ export function DocArchivAppShell(): React.ReactElement {
 
   return (
     <MantineAppShell
-      header={{ height: { base: 196, sm: 180 } }}
+      header={{
+        height: {
+          base: isCompactHeaderMode ? COMPACT_HEADER_HEIGHT_BASE : NORMAL_HEADER_HEIGHT_BASE,
+          sm: isCompactHeaderMode ? COMPACT_HEADER_HEIGHT_SM : NORMAL_HEADER_HEIGHT_SM,
+        },
+      }}
       navbar={{
         width: 320,
         breakpoint: 'md',
@@ -135,7 +149,7 @@ export function DocArchivAppShell(): React.ReactElement {
       styles={{
         main: {
           background: 'var(--navy)',
-          paddingBottom: 'calc(72px + var(--mantine-spacing-md))',
+          paddingBottom: `calc(${BOTTOM_NAV_HEIGHT}px + var(--mantine-spacing-md) + env(safe-area-inset-bottom, 0px))`,
         },
         header: {
           background: 'linear-gradient(160deg, #0a1628, #1a3060, #0f2040)',
@@ -152,11 +166,18 @@ export function DocArchivAppShell(): React.ReactElement {
           bottom: 0,
           background: 'linear-gradient(0deg, #08132a, #0f1f3d)',
           borderTop: '1px solid var(--white-15)',
+          zIndex: 200,
         },
       }}
     >
       <MantineAppShell.Header>
-        <Stack h="100%" px={{ base: 'sm', sm: 'lg' }} py="sm" gap="sm" justify="space-between">
+        <Stack
+          h="100%"
+          px={{ base: 'sm', sm: 'lg' }}
+          py={isCompactHeaderMode ? 'xs' : 'sm'}
+          gap={isCompactHeaderMode ? 'xs' : 'sm'}
+          justify="space-between"
+        >
           <Group justify="space-between" wrap="nowrap" align="center">
             <Title order={1} size="h2" fw={900} style={{ fontFamily: '"Montserrat", sans-serif', letterSpacing: '0.01em' }}>
               <Text span c="white">
@@ -189,7 +210,12 @@ export function DocArchivAppShell(): React.ReactElement {
             }}
           >
             <SimpleGrid cols={3} spacing={0} style={{ width: '100%' }}>
-              <Stack gap={2} p="xs" ta="center" style={{ background: 'rgba(15, 31, 61, 0.55)' }}>
+              <Stack
+                gap={2}
+                p={isCompactHeaderMode ? COMPACT_STATS_PADDING : 'xs'}
+                ta="center"
+                style={{ background: 'rgba(15, 31, 61, 0.55)' }}
+              >
                 <Text c="var(--gold)" fw={800} size="lg" style={{ fontFamily: '"Montserrat", sans-serif' }}>
                   {documentCount}
                 </Text>
@@ -199,7 +225,7 @@ export function DocArchivAppShell(): React.ReactElement {
               </Stack>
               <Stack
                 gap={2}
-                p="xs"
+                p={isCompactHeaderMode ? COMPACT_STATS_PADDING : 'xs'}
                 ta="center"
                 style={{ background: 'rgba(15, 31, 61, 0.55)', borderLeft: '1px solid var(--white-15)', borderRight: '1px solid var(--white-15)' }}
               >
@@ -210,7 +236,12 @@ export function DocArchivAppShell(): React.ReactElement {
                   Anzahl Tags
                 </Text>
               </Stack>
-              <Stack gap={2} p="xs" ta="center" style={{ background: 'rgba(15, 31, 61, 0.55)' }}>
+              <Stack
+                gap={2}
+                p={isCompactHeaderMode ? COMPACT_STATS_PADDING : 'xs'}
+                ta="center"
+                style={{ background: 'rgba(15, 31, 61, 0.55)' }}
+              >
                 <Text c="var(--gold)" fw={800} size="lg" style={{ fontFamily: '"Montserrat", sans-serif' }}>
                   {latestUploadMonth}
                 </Text>
@@ -258,7 +289,7 @@ export function DocArchivAppShell(): React.ReactElement {
         />
       </MantineAppShell.Main>
 
-      <MantineAppShell.Footer px="xs" py="xs">
+      <MantineAppShell.Footer px="xs" py={`calc(var(--mantine-spacing-xs) + env(safe-area-inset-bottom, 0px))`}>
         <Group justify="space-around" wrap="nowrap">
           {[
             { key: 'archiv', label: 'Archiv', icon: IconArchive },
