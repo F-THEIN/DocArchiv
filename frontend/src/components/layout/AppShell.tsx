@@ -26,6 +26,7 @@ const NORMAL_HEADER_HEIGHT_SM = 180;
 const COMPACT_HEADER_HEIGHT_BASE = 164;
 const COMPACT_HEADER_HEIGHT_SM = 148;
 const COMPACT_STATS_PADDING = 6;
+const COMPACT_MODE_MAX_HEIGHT = 500;
 const BOTTOM_NAV_HEIGHT = 72;
 
 export function DocArchivAppShell(): React.ReactElement {
@@ -36,7 +37,7 @@ export function DocArchivAppShell(): React.ReactElement {
   const [activeNavItem, setActiveNavItem] = useState<'archiv' | 'suche' | 'tags' | 'filter'>('archiv');
   const theme = useMantineTheme();
   const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
-  const isCompactHeaderMode = useMediaQuery('(orientation: landscape), (max-height: 500px)');
+  const isCompactHeaderMode = useMediaQuery(`(orientation: landscape), (max-height: ${COMPACT_MODE_MAX_HEIGHT}px)`);
   const documentsState = useDocuments();
   const tagsState = useTags();
   const refreshLabel = 'Aktualisieren';

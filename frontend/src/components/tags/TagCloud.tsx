@@ -16,16 +16,17 @@ const CHIP_MIN_WIDTH = `max(${MIN_CHIP_TOUCH_WIDTH}px, max-content)`;
 
 export function TagCloud({ tags, selectedTags, onToggleTag, onEditTag }: TagCloudProps): React.ReactElement {
   const editableTag = tags.find((tag) => selectedTags.includes(tag.name)) ?? null;
-  const tagRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const tagElementMap = useRef<Record<string, HTMLButtonElement | null>>({});
 
   useEffect(() => {
-    const firstSelectedTagName = tags.find((tag) => selectedTags.includes(tag.name))?.name;
+    const selectedTagSet = new Set(selectedTags);
+    const firstSelectedTagName = tags.find((tag) => selectedTagSet.has(tag.name))?.name;
 
     if (!firstSelectedTagName) {
       return;
     }
 
-    tagRefs.current[firstSelectedTagName]?.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+    tagElementMap.current[firstSelectedTagName]?.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
   }, [selectedTags, tags]);
 
   if (tags.length === 0) {
@@ -107,7 +108,7 @@ export function TagCloud({ tags, selectedTags, onToggleTag, onEditTag }: TagClou
                 type="button"
                 radius="xl"
                 ref={(element) => {
-                  tagRefs.current[tag.name] = element;
+                  tagElementMap.current[tag.name] = element;
                 }}
                 onClick={() => onToggleTag(tag.name)}
                 styles={{
