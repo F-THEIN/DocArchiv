@@ -88,7 +88,7 @@ export function TagCloud({ tags, selectedTags, onToggleTag, onEditTag }: TagClou
                     letterSpacing: '0.07em',
                     border: '1px solid var(--white-15)',
                     background: isSelected ? activeColor : 'var(--navy-card)',
-                    color: isSelected ? '#0f1f3d' : 'var(--white-40)',
+                    color: isSelected ? '#0f1f3d' : 'var(--white-70)',
                     paddingRight: 10,
                     paddingLeft: 10,
                   },
