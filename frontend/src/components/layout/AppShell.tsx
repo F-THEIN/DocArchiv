@@ -29,9 +29,7 @@ export function DocArchivAppShell(): React.ReactElement {
   const [activeNavItem, setActiveNavItem] = useState<'archiv' | 'suche' | 'tags' | 'filter'>('archiv');
   const theme = useMantineTheme();
   const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
-  const isLandscape = useMediaQuery('(orientation: landscape)');
-  const isLowHeight = useMediaQuery('(max-height: 500px)');
-  const useCompactHeader = isLandscape || isLowHeight;
+  const useCompactHeader = useMediaQuery('(orientation: landscape), (max-height: 500px)');
   const documentsState = useDocuments();
   const tagsState = useTags();
   const refreshLabel = 'Aktualisieren';

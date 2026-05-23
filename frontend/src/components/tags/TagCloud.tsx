@@ -13,15 +13,15 @@ interface TagCloudProps {
 export function TagCloud({ tags, selectedTags, onToggleTag, onEditTag }: TagCloudProps): React.ReactElement {
   const editableTag = tags.find((tag) => selectedTags.includes(tag.name)) ?? null;
   const tagRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const selectedTagName = useMemo(() => tags.find((tag) => selectedTags.includes(tag.name))?.name, [selectedTags, tags]);
+  const firstSelectedTagName = useMemo(() => tags.find((tag) => selectedTags.includes(tag.name))?.name, [selectedTags, tags]);
 
   useEffect(() => {
-    if (selectedTagName === undefined) {
+    if (!firstSelectedTagName) {
       return;
     }
 
-    tagRefs.current[selectedTagName]?.scrollIntoView({ behavior: 'smooth', inline: 'nearest' });
-  }, [selectedTagName]);
+    tagRefs.current[firstSelectedTagName]?.scrollIntoView({ behavior: 'smooth', inline: 'nearest' });
+  }, [firstSelectedTagName]);
 
   if (tags.length === 0) {
     return (
