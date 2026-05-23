@@ -26,6 +26,7 @@ const NORMAL_HEADER_HEIGHT_SM = 180;
 const COMPACT_HEADER_HEIGHT_BASE = 164;
 const COMPACT_HEADER_HEIGHT_SM = 148;
 const COMPACT_STATS_PADDING = 6;
+const BOTTOM_NAV_HEIGHT = 72;
 
 export function DocArchivAppShell(): React.ReactElement {
   const [mobileOpened, { toggle: toggleMobile, close: closeMobile }] = useDisclosure(false);
@@ -35,7 +36,7 @@ export function DocArchivAppShell(): React.ReactElement {
   const [activeNavItem, setActiveNavItem] = useState<'archiv' | 'suche' | 'tags' | 'filter'>('archiv');
   const theme = useMantineTheme();
   const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
-  const useCompactHeader = useMediaQuery('(orientation: landscape), (max-height: 500px)');
+  const isCompactHeaderMode = useMediaQuery('(orientation: landscape), (max-height: 500px)');
   const documentsState = useDocuments();
   const tagsState = useTags();
   const refreshLabel = 'Aktualisieren';
@@ -133,8 +134,8 @@ export function DocArchivAppShell(): React.ReactElement {
     <MantineAppShell
       header={{
         height: {
-          base: useCompactHeader ? COMPACT_HEADER_HEIGHT_BASE : NORMAL_HEADER_HEIGHT_BASE,
-          sm: useCompactHeader ? COMPACT_HEADER_HEIGHT_SM : NORMAL_HEADER_HEIGHT_SM,
+          base: isCompactHeaderMode ? COMPACT_HEADER_HEIGHT_BASE : NORMAL_HEADER_HEIGHT_BASE,
+          sm: isCompactHeaderMode ? COMPACT_HEADER_HEIGHT_SM : NORMAL_HEADER_HEIGHT_SM,
         },
       }}
       navbar={{
@@ -147,7 +148,7 @@ export function DocArchivAppShell(): React.ReactElement {
       styles={{
         main: {
           background: 'var(--navy)',
-          paddingBottom: 'calc(72px + var(--mantine-spacing-md) + env(safe-area-inset-bottom, 0px))',
+          paddingBottom: `calc(${BOTTOM_NAV_HEIGHT}px + var(--mantine-spacing-md) + env(safe-area-inset-bottom, 0px))`,
         },
         header: {
           background: 'linear-gradient(160deg, #0a1628, #1a3060, #0f2040)',
@@ -172,8 +173,8 @@ export function DocArchivAppShell(): React.ReactElement {
         <Stack
           h="100%"
           px={{ base: 'sm', sm: 'lg' }}
-          py={useCompactHeader ? 'xs' : 'sm'}
-          gap={useCompactHeader ? 'xs' : 'sm'}
+          py={isCompactHeaderMode ? 'xs' : 'sm'}
+          gap={isCompactHeaderMode ? 'xs' : 'sm'}
           justify="space-between"
         >
           <Group justify="space-between" wrap="nowrap" align="center">
@@ -210,7 +211,7 @@ export function DocArchivAppShell(): React.ReactElement {
             <SimpleGrid cols={3} spacing={0} style={{ width: '100%' }}>
               <Stack
                 gap={2}
-                p={useCompactHeader ? COMPACT_STATS_PADDING : 'xs'}
+                p={isCompactHeaderMode ? COMPACT_STATS_PADDING : 'xs'}
                 ta="center"
                 style={{ background: 'rgba(15, 31, 61, 0.55)' }}
               >
@@ -223,7 +224,7 @@ export function DocArchivAppShell(): React.ReactElement {
               </Stack>
               <Stack
                 gap={2}
-                p={useCompactHeader ? COMPACT_STATS_PADDING : 'xs'}
+                p={isCompactHeaderMode ? COMPACT_STATS_PADDING : 'xs'}
                 ta="center"
                 style={{ background: 'rgba(15, 31, 61, 0.55)', borderLeft: '1px solid var(--white-15)', borderRight: '1px solid var(--white-15)' }}
               >
@@ -236,7 +237,7 @@ export function DocArchivAppShell(): React.ReactElement {
               </Stack>
               <Stack
                 gap={2}
-                p={useCompactHeader ? COMPACT_STATS_PADDING : 'xs'}
+                p={isCompactHeaderMode ? COMPACT_STATS_PADDING : 'xs'}
                 ta="center"
                 style={{ background: 'rgba(15, 31, 61, 0.55)' }}
               >

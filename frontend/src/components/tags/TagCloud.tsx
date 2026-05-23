@@ -12,6 +12,7 @@ interface TagCloudProps {
 
 const MIN_CHIP_TOUCH_WIDTH = 44;
 const MIN_CHIP_TOUCH_HEIGHT = 36;
+const CHIP_MIN_WIDTH = `max(${MIN_CHIP_TOUCH_WIDTH}px, max-content)`;
 
 export function TagCloud({ tags, selectedTags, onToggleTag, onEditTag }: TagCloudProps): React.ReactElement {
   const editableTag = tags.find((tag) => selectedTags.includes(tag.name)) ?? null;
@@ -24,7 +25,7 @@ export function TagCloud({ tags, selectedTags, onToggleTag, onEditTag }: TagClou
       return;
     }
 
-    tagRefs.current[firstSelectedTagName]?.scrollIntoView({ behavior: 'smooth', inline: 'nearest' });
+    tagRefs.current[firstSelectedTagName]?.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
   }, [selectedTags, tags]);
 
   if (tags.length === 0) {
@@ -122,7 +123,7 @@ export function TagCloud({ tags, selectedTags, onToggleTag, onEditTag }: TagClou
                     background: isSelected ? activeColor : 'var(--navy-card)',
                     color: isSelected ? '#0f1f3d' : 'var(--white-40)',
                     width: 'auto',
-                    minWidth: `max(${MIN_CHIP_TOUCH_WIDTH}px, max-content)`,
+                    minWidth: CHIP_MIN_WIDTH,
                     maxWidth: 'none',
                     minHeight: MIN_CHIP_TOUCH_HEIGHT,
                     padding: '7px 13px',
