@@ -11,11 +11,13 @@ import {
   useMantineTheme,
 } from '@mantine/core';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
-import { IconAdjustmentsHorizontal, IconArchive, IconRefresh, IconSearch, IconTags } from '@tabler/icons-react';
+import { IconAdjustmentsHorizontal, IconArchive, IconRefresh, IconSearch, IconSettings, IconTags } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
 
+import { useAdmin } from '../../hooks/useAdmin';
 import { useDocuments } from '../../hooks/useDocuments';
 import { useTags } from '../../hooks/useTags';
+import { AdminPage } from '../../pages/AdminPage';
 import { HomePage } from '../../pages/HomePage';
 import type { DocumentSummary, Tag } from '../../types/document';
 import { FilterSidebar, type FilterValues } from '../search/FilterSidebar';
@@ -34,12 +36,13 @@ export function DocArchivAppShell(): React.ReactElement {
   const [desktopOpened, { toggle: toggleDesktop, close: closeDesktop }] = useDisclosure(true);
   const [selectedDocument, setSelectedDocument] = useState<DocumentSummary | null>(null);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
-  const [activeNavItem, setActiveNavItem] = useState<'archiv' | 'suche' | 'tags' | 'filter'>('archiv');
+  const [activeNavItem, setActiveNavItem] = useState<'archiv' | 'suche' | 'tags' | 'filter' | 'admin'>('archiv');
   const theme = useMantineTheme();
   const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
   const isCompactHeaderMode = useMediaQuery(`(orientation: landscape), (max-height: ${COMPACT_MODE_MAX_HEIGHT}px)`);
   const documentsState = useDocuments();
   const tagsState = useTags();
+  const adminState = useAdmin();
   const refreshLabel = 'Aktualisieren';
   const documentCount = documentsState.pagination?.total ?? documentsState.documents.length;
   const latestUploadMonth = useMemo(() => {
@@ -125,10 +128,16 @@ export function DocArchivAppShell(): React.ReactElement {
     toggleDesktop();
   }
 
-  function handleMainNavigation(item: 'archiv' | 'suche' | 'tags'): void {
+  function handleMainNavigation(item: 'archiv' | 'suche' | 'tags' | 'admin'): void {
     setActiveNavItem(item);
     closeMobile();
     closeDesktop();
+  }
+
+  async function handleAfterDatabaseReset(): Promise<void> {
+    setSelectedDocument(null);
+    setEditingTag(null);
+    await Promise.all([documentsState.reload(), tagsState.reload(), adminState.reload()]);
   }
 
   return (
@@ -269,24 +278,37 @@ export function DocArchivAppShell(): React.ReactElement {
       </MantineAppShell.Navbar>
 
       <MantineAppShell.Main>
-        <HomePage
-          documents={documentsState.documents}
-          selectedDocument={selectedDocument}
-          selectedTags={documentsState.query.tags ?? []}
-          isLoadingDocuments={documentsState.isLoading}
-          documentError={documentsState.error}
-          tagError={tagsState.error}
-          pagination={documentsState.pagination}
-          searchValue={documentsState.query.q ?? ''}
-          tags={tagsState.tags}
-          onSearch={handleSearch}
-          onOpenDocument={handleOpenDocument}
-          onCloseDocument={handleCloseDocument}
-          onPageChange={(page) => documentsState.updateQuery({ page })}
-          onRetryDocuments={() => void documentsState.reload()}
-          onToggleTag={handleToggleTag}
-          onEditTag={handleEditTag}
-        />
+        {activeNavItem === 'admin' ? (
+          <AdminPage
+            stats={adminState.stats}
+            databaseInfo={adminState.databaseInfo}
+            isLoading={adminState.isLoading}
+            isResetting={adminState.isResetting}
+            error={adminState.error}
+            onReload={adminState.reload}
+            onResetDatabase={adminState.resetDatabase}
+            onAfterReset={handleAfterDatabaseReset}
+          />
+        ) : (
+          <HomePage
+            documents={documentsState.documents}
+            selectedDocument={selectedDocument}
+            selectedTags={documentsState.query.tags ?? []}
+            isLoadingDocuments={documentsState.isLoading}
+            documentError={documentsState.error}
+            tagError={tagsState.error}
+            pagination={documentsState.pagination}
+            searchValue={documentsState.query.q ?? ''}
+            tags={tagsState.tags}
+            onSearch={handleSearch}
+            onOpenDocument={handleOpenDocument}
+            onCloseDocument={handleCloseDocument}
+            onPageChange={(page) => documentsState.updateQuery({ page })}
+            onRetryDocuments={() => void documentsState.reload()}
+            onToggleTag={handleToggleTag}
+            onEditTag={handleEditTag}
+          />
+        )}
       </MantineAppShell.Main>
 
       <MantineAppShell.Footer px="xs" py={`calc(var(--mantine-spacing-xs) + env(safe-area-inset-bottom, 0px))`}>
@@ -296,6 +318,7 @@ export function DocArchivAppShell(): React.ReactElement {
             { key: 'suche', label: 'Suche', icon: IconSearch },
             { key: 'tags', label: 'Tags', icon: IconTags },
             { key: 'filter', label: 'Filter', icon: IconAdjustmentsHorizontal },
+            { key: 'admin', label: 'Admin', icon: IconSettings },
           ].map((item) => {
             const isActive = activeNavItem === item.key;
             const Icon = item.icon;
@@ -306,9 +329,9 @@ export function DocArchivAppShell(): React.ReactElement {
                 onClick={() =>
                   item.key === 'filter'
                     ? handleFilterNavigation()
-                    : handleMainNavigation(item.key as 'archiv' | 'suche' | 'tags')
+                    : handleMainNavigation(item.key as 'archiv' | 'suche' | 'tags' | 'admin')
                 }
-                style={{ minWidth: 64 }}
+                style={{ minWidth: 56 }}
               >
                 <Stack align="center" gap={2}>
                   <Box h={2} w={20} style={{ borderRadius: 99, background: isActive ? 'var(--gold)' : 'transparent' }} />

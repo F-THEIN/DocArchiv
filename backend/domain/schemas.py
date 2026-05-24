@@ -234,3 +234,54 @@ class DocumentQueryParams(BaseModel):
     def normalize_query_tags(cls, value: list[str]) -> list[str]:
         """Normalisiert Query-Tags."""
         return [tag.strip().lower() for tag in value if tag.strip()]
+
+
+class MonthCount(BaseModel):
+    """Statistikwert fuer Dokumente pro Monat."""
+
+    month: str
+    count: int = Field(ge=0)
+
+
+class TagCount(BaseModel):
+    """Statistikwert fuer Tags mit Dokumentanzahl."""
+
+    name: str
+    count: int = Field(ge=0)
+
+
+class AdminStatsResponse(BaseModel):
+    """Response-Schema fuer Admin-Statistiken."""
+
+    total_documents: int = Field(ge=0)
+    total_tags: int = Field(ge=0)
+    documents_by_type: dict[str, int]
+    documents_by_month: list[MonthCount]
+    top_tags: list[TagCount]
+    documents_without_tags: int = Field(ge=0)
+    orphaned_tags: int = Field(ge=0)
+
+
+class TableInfo(BaseModel):
+    """Technische Informationen zu einer Datenbanktabelle."""
+
+    name: str
+    row_count: int = Field(ge=0)
+    size: str
+
+
+class DatabaseInfoResponse(BaseModel):
+    """Response-Schema fuer technische Datenbankinformationen."""
+
+    database_size: str
+    tables: list[TableInfo]
+    alembic_revision: str | None
+    postgres_version: str
+
+
+class ResetDatabaseResponse(BaseModel):
+    """Response-Schema fuer das Zuruecksetzen der Datenbank."""
+
+    message: str
+    deleted_documents: int = Field(ge=0)
+    deleted_tags: int = Field(ge=0)

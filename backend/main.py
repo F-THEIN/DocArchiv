@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from api.admin import router as admin_router
 from api.documents import router as documents_router
 from api.tags import router as tags_router
 from config import Settings, get_settings
@@ -48,6 +49,7 @@ def create_app() -> FastAPI:
 
     app.include_router(documents_router, prefix=settings.api_prefix)
     app.include_router(tags_router, prefix=settings.api_prefix)
+    app.include_router(admin_router, prefix=settings.api_prefix)
 
     @app.get(f"{settings.api_prefix}/health", tags=["health"])
     def health_check() -> dict[str, Any]:

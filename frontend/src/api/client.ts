@@ -1,10 +1,13 @@
 import type {
+  AdminStatsResponse,
   CreateDocumentPayload,
   CreateTagPayload,
+  DatabaseInfoResponse,
   DocumentDetail,
   DocumentListQuery,
   DocumentSummary,
   PaginatedResponse,
+  ResetDatabaseResponse,
   Tag,
   UpdateDocumentPayload,
   UpdateTagPayload,
@@ -182,5 +185,19 @@ export const apiClient = {
 
   listDocumentTypes(): Promise<string[]> {
     return request('/documents/types');
+  },
+
+  getAdminStats(): Promise<AdminStatsResponse> {
+    return request('/admin/stats');
+  },
+
+  getDatabaseInfo(): Promise<DatabaseInfoResponse> {
+    return request('/admin/database-info');
+  },
+
+  resetDatabase(): Promise<ResetDatabaseResponse> {
+    return request('/admin/reset-database', {
+      method: 'POST',
+    });
   },
 };

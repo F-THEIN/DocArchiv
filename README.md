@@ -10,6 +10,7 @@ DocArchiv ist eine leichtgewichtige Dokumenten-Archiv-SPA als Docker-Service. Di
 - React-SPA mit Mantine-Oberflaeche.
 - Automatische Datenbankmigration beim Containerstart.
 - Docker-Compose-Setup fuer App und PostgreSQL.
+- Admin-Seite mit Statistik-Dashboard, Datenbank-Info und sicher bestaetigtem Datenbank-Reset.
 
 ## Architektur
 
@@ -200,6 +201,26 @@ npm run dev
 ```
 
 Der Vite-Dev-Server leitet `/api` an `http://localhost:8000` weiter.
+
+## Admin-Seite
+
+Die SPA enthaelt einen Admin-Bereich in der unteren Navigation. Er ist fuer lokale Wartung und administrative Aufgaben gedacht.
+
+Der Admin-Bereich bietet:
+
+- **Statistik-Dashboard**: Gesamtzahlen fuer Dokumente und Tags, Dokumente pro Typ, Dokumente pro Monat, Top-Tags, Dokumente ohne Tags und verwaiste Tags.
+- **Datenbank-Info**: Datenbankgroesse, Tabellenuebersicht, Zeilenanzahlen, Tabellengroessen, Alembic-Revision und PostgreSQL-Version.
+- **Datenbank zuruecksetzen**: Loescht alle Dokumente, Tags und Tag-Zuordnungen in der Datenbank. PDF-Dateien in Nextcloud bleiben unveraendert. Zur Sicherheit muss im Bestaetigungsdialog exakt `LÖSCHEN` eingegeben werden.
+
+Die zugehoerigen API-Endpunkte liegen unter:
+
+| Methode | Pfad | Beschreibung |
+| --- | --- | --- |
+| `GET` | `/api/admin/stats` | Liefert fachliche Admin-Statistiken. |
+| `GET` | `/api/admin/database-info` | Liefert technische Datenbankinformationen. |
+| `POST` | `/api/admin/reset-database` | Setzt die Archivdatenbank durch Leeren der Anwendungstabellen zurueck. |
+
+Wichtig: Der Reset-Endpunkt ist eine destruktive Wartungsfunktion. Fuer produktive Nutzung sollte der Admin-Bereich zusaetzlich durch Reverse-Proxy-Regeln, Authentifizierung oder ein internes Netzwerk geschuetzt werden.
 
 ## Docker Compose lokal
 

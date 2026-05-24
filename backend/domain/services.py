@@ -1,23 +1,34 @@
-"""Domain Services fuer Dokumente, Tags und Nextcloud-Linkaufbau."""
+"""Domain Services fuer Dokumente, Tags, Admin-Funktionen und Nextcloud-Linkaufbau."""
 
+import logging
 from math import ceil
-from typing import Protocol
+from typing import Any, Protocol
 from urllib.parse import quote
 
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from domain.models import Document, Tag
 from domain.schemas import (
+    AdminStatsResponse,
+    DatabaseInfoResponse,
     DocumentCreate,
     DocumentListResponse,
     DocumentQueryParams,
     DocumentResponse,
     DocumentUpdate,
+    MonthCount,
     PaginatedResponse,
+    ResetDatabaseResponse,
+    TableInfo,
+    TagCount,
     TagCreate,
     TagResponse,
     TagUpdate,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 class DocumentNotFoundError(ValueError):
@@ -275,3 +286,180 @@ class TagService:
             color=updated_tag.color,
             document_count=len(updated_tag.documents),
         )
+
+
+class AdminService:
+    """Business-Logik fuer administrative Funktionen."""
+
+    def __init__(self, *, session: Session) -> None:
+        """Initialisiert den Service mit einer Datenbank-Session."""
+        self.session = session
+
+    def reset_database(self) -> ResetDatabaseResponse:
+        """Loescht alle Dokument-, Tag- und Zuordnungsdaten unwiderruflich."""
+        deleted_documents = self._count_table_rows("documents")
+        deleted_tags = self._count_table_rows("tags")
+
+        logger.warning(
+            "Admin-Aktion: Datenbank wird zurueckgesetzt. Dokumente=%s Tags=%s",
+            deleted_documents,
+            deleted_tags,
+        )
+        self.session.execute(text("TRUNCATE TABLE document_tags, documents, tags RESTART IDENTITY CASCADE"))
+        self.session.commit()
+
+        return ResetDatabaseResponse(
+            message="Datenbank wurde erfolgreich zurueckgesetzt.",
+            deleted_documents=deleted_documents,
+            deleted_tags=deleted_tags,
+        )
+
+    def get_stats(self) -> AdminStatsResponse:
+        """Liefert fachliche Statistiken fuer die Admin-Seite."""
+        total_documents = self._count_table_rows("documents")
+        total_tags = self._count_table_rows("tags")
+
+        documents_by_type = {
+            str(row._mapping["document_type"]): int(row._mapping["count"])
+            for row in self.session.execute(
+                text(
+                    """
+                    SELECT document_type, COUNT(*) AS count
+                    FROM documents
+                    GROUP BY document_type
+                    ORDER BY document_type ASC
+                    """
+                )
+            )
+        }
+        documents_by_month = [
+            MonthCount(month=str(row._mapping["month"]), count=int(row._mapping["count"]))
+            for row in self.session.execute(
+                text(
+                    """
+                    SELECT to_char(date_trunc('month', COALESCE(document_date, created_at::date)), 'YYYY-MM') AS month,
+                           COUNT(*) AS count
+                    FROM documents
+                    GROUP BY month
+                    ORDER BY month DESC
+                    LIMIT 12
+                    """
+                )
+            )
+        ]
+        documents_by_month.reverse()
+
+        top_tags = [
+            TagCount(name=str(row._mapping["name"]), count=int(row._mapping["count"]))
+            for row in self.session.execute(
+                text(
+                    """
+                    SELECT tags.name AS name, COUNT(document_tags.document_id) AS count
+                    FROM tags
+                    LEFT JOIN document_tags ON document_tags.tag_id = tags.id
+                    GROUP BY tags.id, tags.name
+                    ORDER BY count DESC, tags.name ASC
+                    LIMIT 10
+                    """
+                )
+            )
+        ]
+        documents_without_tags = int(
+            self.session.scalar(
+                text(
+                    """
+                    SELECT COUNT(*)
+                    FROM documents
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM document_tags WHERE document_tags.document_id = documents.id
+                    )
+                    """
+                )
+            )
+            or 0
+        )
+        orphaned_tags = int(
+            self.session.scalar(
+                text(
+                    """
+                    SELECT COUNT(*)
+                    FROM tags
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM document_tags WHERE document_tags.tag_id = tags.id
+                    )
+                    """
+                )
+            )
+            or 0
+        )
+
+        return AdminStatsResponse(
+            total_documents=total_documents,
+            total_tags=total_tags,
+            documents_by_type=documents_by_type,
+            documents_by_month=documents_by_month,
+            top_tags=top_tags,
+            documents_without_tags=documents_without_tags,
+            orphaned_tags=orphaned_tags,
+        )
+
+    def get_database_info(self) -> DatabaseInfoResponse:
+        """Liefert technische Informationen zur PostgreSQL-Datenbank."""
+        database_size = str(
+            self.session.scalar(text("SELECT pg_size_pretty(pg_database_size(current_database()))")) or "unbekannt"
+        )
+        postgres_version = str(self.session.scalar(text("SELECT version()")) or "unbekannt")
+        alembic_revision = self._get_alembic_revision()
+        tables = [
+            TableInfo(
+                name=str(row._mapping["name"]),
+                row_count=int(row._mapping["row_count"]),
+                size=str(row._mapping["size"]),
+            )
+            for row in self.session.execute(
+                text(
+                    """
+                    SELECT relname AS name,
+                           n_live_tup::bigint AS row_count,
+                           pg_size_pretty(pg_total_relation_size(relid)) AS size
+                    FROM pg_stat_user_tables
+                    WHERE schemaname = 'public'
+                    ORDER BY relname ASC
+                    """
+                )
+            )
+        ]
+
+        return DatabaseInfoResponse(
+            database_size=database_size,
+            tables=tables,
+            alembic_revision=alembic_revision,
+            postgres_version=postgres_version,
+        )
+
+    def _count_table_rows(self, table_name: str) -> int:
+        """Zaehlt Zeilen einer bekannten Anwendungstabelle."""
+        allowed_tables = {"documents", "tags", "document_tags"}
+        if table_name not in allowed_tables:
+            raise ValueError(f"Unbekannte Tabelle: {table_name}")
+        return int(self.session.scalar(text(f"SELECT COUNT(*) FROM {table_name}")) or 0)
+
+    def _get_alembic_revision(self) -> str | None:
+        """Liest die aktuelle Alembic-Revision, falls die Versionstabelle existiert."""
+        table_exists = bool(
+            self.session.scalar(
+                text(
+                    """
+                    SELECT EXISTS (
+                        SELECT 1
+                        FROM information_schema.tables
+                        WHERE table_schema = 'public' AND table_name = 'alembic_version'
+                    )
+                    """
+                )
+            )
+        )
+        if not table_exists:
+            return None
+        revision: Any = self.session.scalar(text("SELECT version_num FROM alembic_version LIMIT 1"))
+        return str(revision) if revision is not None else None

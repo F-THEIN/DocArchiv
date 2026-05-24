@@ -7,7 +7,7 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from config import Settings, get_settings
-from domain.services import DocumentService, TagService
+from domain.services import AdminService, DocumentService, TagService
 from infrastructure.database import get_db_session
 from infrastructure.repositories import DocumentRepository, TagRepository
 
@@ -33,8 +33,14 @@ def get_tag_service(session: SessionDep) -> TagService:
     )
 
 
+def get_admin_service(session: SessionDep) -> AdminService:
+    """Erzeugt den AdminService fuer einen Request."""
+    return AdminService(session=session)
+
+
 DocumentServiceDep = Annotated[DocumentService, Depends(get_document_service)]
 TagServiceDep = Annotated[TagService, Depends(get_tag_service)]
+AdminServiceDep = Annotated[AdminService, Depends(get_admin_service)]
 
 
 def get_database_session() -> Generator[Session, None, None]:

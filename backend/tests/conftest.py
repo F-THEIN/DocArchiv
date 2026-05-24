@@ -6,14 +6,20 @@ from datetime import date, datetime, timezone
 import pytest
 from fastapi.testclient import TestClient
 
-from api.dependencies import get_document_service, get_tag_service
+from api.dependencies import get_admin_service, get_document_service, get_tag_service
 from domain.schemas import (
+    AdminStatsResponse,
+    DatabaseInfoResponse,
     DocumentCreate,
     DocumentListResponse,
     DocumentQueryParams,
     DocumentResponse,
     DocumentUpdate,
+    MonthCount,
     PaginatedResponse,
+    ResetDatabaseResponse,
+    TableInfo,
+    TagCount,
     TagCreate,
     TagResponse,
     TagUpdate,
@@ -186,6 +192,44 @@ class FakeTagService:
         return updated
 
 
+class FakeAdminService:
+    """In-Memory-Ersatz fuer den AdminService in API-Tests."""
+
+    def __init__(self) -> None:
+        """Initialisiert den Fake-Service mit stabilen Admin-Daten."""
+        self.reset_called = False
+
+    def reset_database(self) -> ResetDatabaseResponse:
+        """Simuliert das Zuruecksetzen der Datenbank."""
+        self.reset_called = True
+        return ResetDatabaseResponse(
+            message="Datenbank wurde erfolgreich zurueckgesetzt.",
+            deleted_documents=2,
+            deleted_tags=3,
+        )
+
+    def get_stats(self) -> AdminStatsResponse:
+        """Liefert stabile Admin-Statistiken."""
+        return AdminStatsResponse(
+            total_documents=2,
+            total_tags=3,
+            documents_by_type={"Rechnung": 1, "Vertrag": 1},
+            documents_by_month=[MonthCount(month="2026-05", count=2)],
+            top_tags=[TagCount(name="rechnung", count=1), TagCount(name="vertrag", count=1)],
+            documents_without_tags=1,
+            orphaned_tags=1,
+        )
+
+    def get_database_info(self) -> DatabaseInfoResponse:
+        """Liefert stabile technische Datenbankinformationen."""
+        return DatabaseInfoResponse(
+            database_size="24 MB",
+            tables=[TableInfo(name="documents", row_count=2, size="16 kB"), TableInfo(name="tags", row_count=3, size="16 kB")],
+            alembic_revision="001_initial_schema",
+            postgres_version="PostgreSQL 16.2",
+        )
+
+
 @pytest.fixture
 def fake_document_service() -> FakeDocumentService:
     """Liefert einen frischen FakeDocumentService pro Test."""
@@ -199,10 +243,21 @@ def fake_tag_service() -> FakeTagService:
 
 
 @pytest.fixture
-def client(fake_document_service: FakeDocumentService, fake_tag_service: FakeTagService) -> Iterator[TestClient]:
+def fake_admin_service() -> FakeAdminService:
+    """Liefert einen frischen FakeAdminService pro Test."""
+    return FakeAdminService()
+
+
+@pytest.fixture
+def client(
+    fake_document_service: FakeDocumentService,
+    fake_tag_service: FakeTagService,
+    fake_admin_service: FakeAdminService,
+) -> Iterator[TestClient]:
     """Liefert einen TestClient mit ueberschriebenen Service-Dependencies."""
     app.dependency_overrides[get_document_service] = lambda: fake_document_service
     app.dependency_overrides[get_tag_service] = lambda: fake_tag_service
+    app.dependency_overrides[get_admin_service] = lambda: fake_admin_service
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()

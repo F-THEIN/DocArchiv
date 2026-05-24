@@ -67,3 +67,42 @@ export interface UpdateTagPayload {
   name?: string;
   color?: string | null;
 }
+
+export interface MonthCount {
+  month: string;
+  count: number;
+}
+
+export interface TagCount {
+  name: string;
+  count: number;
+}
+
+export interface AdminStatsResponse {
+  total_documents: number;
+  total_tags: number;
+  documents_by_type: Record<string, number>;
+  documents_by_month: MonthCount[];
+  top_tags: TagCount[];
+  documents_without_tags: number;
+  orphaned_tags: number;
+}
+
+export interface TableInfo {
+  name: string;
+  row_count: number;
+  size: string;
+}
+
+export interface DatabaseInfoResponse {
+  database_size: string;
+  tables: TableInfo[];
+  alembic_revision: string | null;
+  postgres_version: string;
+}
+
+export interface ResetDatabaseResponse {
+  message: string;
+  deleted_documents: number;
+  deleted_tags: number;
+}
