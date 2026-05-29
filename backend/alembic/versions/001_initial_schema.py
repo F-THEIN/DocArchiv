@@ -49,7 +49,7 @@ def upgrade() -> None:
         sa.Column("summary", sa.Text(), nullable=False),
         sa.Column("original_filename", sa.String(length=255), nullable=False),
         sa.Column("stored_filename", sa.String(length=255), nullable=False),
-        sa.Column("document_type_id", sa.Integer(), nullable=False),
+        sa.Column("document_type_id", sa.Integer(), nullable=True),
         sa.Column("correspondent_id", sa.Integer(), nullable=True),
         sa.Column("document_date", sa.Date(), nullable=True),
         sa.Column("nextcloud_path", sa.String(length=1024), nullable=False),

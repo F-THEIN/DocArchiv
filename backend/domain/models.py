@@ -69,9 +69,9 @@ class Document(Base):
     summary: Mapped[str] = mapped_column(Text, nullable=False, default="")
     original_filename: Mapped[str] = mapped_column(String(255), nullable=False)
     stored_filename: Mapped[str] = mapped_column(String(255), nullable=False)
-    document_type_id: Mapped[int] = mapped_column(
+    document_type_id: Mapped[int | None] = mapped_column(
         ForeignKey("document_types.id", ondelete="RESTRICT"),
-        nullable=False,
+        nullable=True,
         index=True,
     )
     correspondent_id: Mapped[int | None] = mapped_column(
@@ -98,7 +98,7 @@ class Document(Base):
         nullable=True,
     )
 
-    document_type_rel: Mapped["DocumentType"] = relationship(
+    document_type_rel: Mapped["DocumentType | None"] = relationship(
         back_populates="documents",
         lazy="joined",
     )

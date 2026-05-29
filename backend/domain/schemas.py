@@ -211,7 +211,7 @@ class DocumentBase(BaseModel):
     summary: str = Field(default="")
     original_filename: str = Field(min_length=1, max_length=255)
     stored_filename: str = Field(min_length=1, max_length=255)
-    document_type_id: int = Field(gt=0)
+    document_type_id: int | None = Field(default=None, gt=0)
     correspondent_id: int | None = Field(default=None, gt=0)
     document_date: date | None = None
     nextcloud_path: str = Field(min_length=1, max_length=1024)
@@ -308,7 +308,7 @@ class DocumentResponse(DocumentBase):
     nextcloud_url: str
     created_at: datetime
     updated_at: datetime
-    document_type: DocumentTypeResponse = Field(validation_alias="document_type_rel")
+    document_type: DocumentTypeResponse | None = Field(default=None, validation_alias="document_type_rel")
     correspondent: CorrespondentResponse | None = None
     tags: list[TagResponse] = Field(default_factory=list)
 
@@ -323,14 +323,14 @@ class DocumentListResponse(BaseModel):
     summary: str
     original_filename: str
     stored_filename: str
-    document_type_id: int
+    document_type_id: int | None
     correspondent_id: int | None
     document_date: date | None
     nextcloud_path: str
     nextcloud_url: str
     created_at: datetime
     updated_at: datetime
-    document_type: DocumentTypeResponse = Field(validation_alias="document_type_rel")
+    document_type: DocumentTypeResponse | None = Field(default=None, validation_alias="document_type_rel")
     correspondent: CorrespondentResponse | None = None
     tags: list[TagResponse] = Field(default_factory=list)
 
