@@ -15,7 +15,9 @@ import { IconAdjustmentsHorizontal, IconArchive, IconRefresh, IconSearch, IconSe
 import { useMemo, useState } from 'react';
 
 import { useAdmin } from '../../hooks/useAdmin';
+import { useCorrespondents } from '../../hooks/useCorrespondents';
 import { useDocuments } from '../../hooks/useDocuments';
+import { useDocumentTypes } from '../../hooks/useDocumentTypes';
 import { useTags } from '../../hooks/useTags';
 import { AdminPage } from '../../pages/AdminPage';
 import { HomePage } from '../../pages/HomePage';
@@ -42,6 +44,8 @@ export function DocArchivAppShell(): React.ReactElement {
   const isCompactHeaderMode = useMediaQuery(`(orientation: landscape), (max-height: ${COMPACT_MODE_MAX_HEIGHT}px)`);
   const documentsState = useDocuments();
   const tagsState = useTags();
+  const correspondentsState = useCorrespondents();
+  const documentTypesState = useDocumentTypes();
   const adminState = useAdmin();
   const refreshLabel = 'Aktualisieren';
   const documentCount = documentsState.pagination?.total ?? documentsState.documents.length;
@@ -60,7 +64,8 @@ export function DocArchivAppShell(): React.ReactElement {
 
   const filters: FilterValues = {
     selectedTags: documentsState.query.tags ?? [],
-    documentType: documentsState.query.type ?? '',
+    documentTypeId: documentsState.query.document_type_id !== undefined ? String(documentsState.query.document_type_id) : '',
+    correspondentId: documentsState.query.correspondent_id !== undefined ? String(documentsState.query.correspondent_id) : '',
     dateFrom: documentsState.query.date_from ?? '',
     dateTo: documentsState.query.date_to ?? '',
     sort: documentsState.query.sort ?? 'date_desc',
@@ -73,7 +78,8 @@ export function DocArchivAppShell(): React.ReactElement {
   function handleFilterChange(nextFilters: FilterValues): void {
     documentsState.updateQuery({
       tags: nextFilters.selectedTags,
-      type: nextFilters.documentType || undefined,
+      document_type_id: nextFilters.documentTypeId ? Number(nextFilters.documentTypeId) : undefined,
+      correspondent_id: nextFilters.correspondentId ? Number(nextFilters.correspondentId) : undefined,
       date_from: nextFilters.dateFrom || undefined,
       date_to: nextFilters.dateTo || undefined,
       sort: nextFilters.sort,
@@ -137,7 +143,13 @@ export function DocArchivAppShell(): React.ReactElement {
   async function handleAfterDatabaseReset(): Promise<void> {
     setSelectedDocument(null);
     setEditingTag(null);
-    await Promise.all([documentsState.reload(), tagsState.reload(), adminState.reload()]);
+    await Promise.all([
+      documentsState.reload(),
+      tagsState.reload(),
+      correspondentsState.reload(),
+      documentTypesState.reload(),
+      adminState.reload(),
+    ]);
   }
 
   return (
@@ -266,7 +278,9 @@ export function DocArchivAppShell(): React.ReactElement {
       <MantineAppShell.Navbar p="md">
         <FilterSidebar
           tags={tagsState.tags}
-          isLoading={tagsState.isLoading}
+          documentTypes={documentTypesState.documentTypes}
+          correspondents={correspondentsState.correspondents}
+          isLoading={tagsState.isLoading || documentTypesState.isLoading || correspondentsState.isLoading}
           values={filters}
           onChange={handleFilterChange}
           onReset={handleResetFilters}

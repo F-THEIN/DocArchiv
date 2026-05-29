@@ -23,7 +23,8 @@ def list_documents(
     service: DocumentServiceDep,
     q: str | None = Query(default=None, description="Volltextsuche"),
     tags: str | None = Query(default=None, description="Kommaseparierte Tag-Liste"),
-    document_type: str | None = Query(default=None, alias="type", description="Dokumenttyp"),
+    document_type_id: int | None = Query(default=None, description="Dokumenttyp-ID"),
+    correspondent_id: int | None = Query(default=None, description="Korrespondent-ID"),
     date_from: date | None = Query(default=None, description="Startdatum inklusive"),
     date_to: date | None = Query(default=None, description="Enddatum inklusive"),
     page: int = Query(default=1, ge=1),
@@ -35,7 +36,8 @@ def list_documents(
     query = DocumentQueryParams(
         q=q,
         tags=tag_list,
-        document_type=document_type,
+        document_type_id=document_type_id,
+        correspondent_id=correspondent_id,
         date_from=date_from,
         date_to=date_to,
         page=page,
@@ -43,12 +45,6 @@ def list_documents(
         sort=sort,
     )
     return service.list_documents(query)
-
-
-@router.get("/types", response_model=list[str])
-def list_document_types(service: DocumentServiceDep) -> list[str]:
-    """Liefert alle vorhandenen Dokumenttypen."""
-    return service.list_document_types()
 
 
 @router.get("/{document_id}", response_model=DocumentResponse)

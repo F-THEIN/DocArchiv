@@ -1,5 +1,5 @@
 import { ActionIcon, Badge, Box, Card, Group, Stack, Text, ThemeIcon, Title, Tooltip } from '@mantine/core';
-import { IconExternalLink, IconFileText } from '@tabler/icons-react';
+import { IconExternalLink, IconFileText, IconUser } from '@tabler/icons-react';
 
 import type { DocumentSummary } from '../../types/document';
 
@@ -8,22 +8,14 @@ interface DocumentCardProps {
   onOpen: (document: DocumentSummary) => void;
 }
 
-function getTypeVisuals(type: string): { stripe: string; badgeColor: string; tagBackground: string } {
-  const normalizedType = type.trim().toLowerCase();
+function getTypeVisuals(document: DocumentSummary): { stripe: string; badgeColor: string; tagBackground: string } {
+  const color = document.document_type.color;
 
-  if (normalizedType === 'antrag') {
+  if (color) {
     return {
-      stripe: 'linear-gradient(90deg, #c0392b, var(--red))',
-      badgeColor: 'var(--red)',
-      tagBackground: 'rgba(231, 76, 60, 0.2)',
-    };
-  }
-
-  if (normalizedType === 'bild') {
-    return {
-      stripe: 'linear-gradient(90deg, #2563be, var(--teal))',
-      badgeColor: 'var(--blue)',
-      tagBackground: 'rgba(59, 157, 232, 0.2)',
+      stripe: `linear-gradient(90deg, ${color}, ${color}cc)`,
+      badgeColor: color,
+      tagBackground: `${color}33`,
     };
   }
 
@@ -43,7 +35,7 @@ function formatDocumentDate(value: string | null): string {
 }
 
 export function DocumentCard({ document, onOpen }: DocumentCardProps): React.ReactElement {
-  const typeVisuals = getTypeVisuals(document.document_type);
+  const typeVisuals = getTypeVisuals(document);
 
   return (
     <Card
@@ -78,7 +70,7 @@ export function DocumentCard({ document, onOpen }: DocumentCardProps): React.Rea
             </ThemeIcon>
             <Stack gap={2}>
               <Text c={typeVisuals.badgeColor} fw={800} size="10px" tt="uppercase" style={{ letterSpacing: '0.12em', fontFamily: '"Montserrat", sans-serif' }}>
-                {document.document_type}
+                {document.document_type.name}
               </Text>
               <Title order={3} size="h4" c="white" style={{ fontFamily: '"Montserrat", sans-serif', fontSize: 15, fontWeight: 700 }}>
                 {document.title}
@@ -131,8 +123,29 @@ export function DocumentCard({ document, onOpen }: DocumentCardProps): React.Rea
               },
             }}
           >
-            {document.document_type}
+            {document.document_type.name}
           </Badge>
+
+          {document.correspondent !== null ? (
+            <Badge
+              radius="xl"
+              leftSection={<IconUser size={10} />}
+              styles={{
+                root: {
+                  background: 'rgba(100, 181, 246, 0.2)',
+                  color: 'var(--blue)',
+                  borderRadius: 100,
+                  fontFamily: '"Montserrat", sans-serif',
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: '0.07em',
+                  textTransform: 'uppercase',
+                },
+              }}
+            >
+              {document.correspondent.name}
+            </Badge>
+          ) : null}
 
           <Badge
             radius="xl"

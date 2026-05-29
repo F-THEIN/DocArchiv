@@ -1,5 +1,5 @@
 import { Box, Card, Group, SimpleGrid, Stack, Table, Text, ThemeIcon, Title } from '@mantine/core';
-import { IconChartBar, IconFileText, IconTags } from '@tabler/icons-react';
+import { IconChartBar, IconFileText, IconTags, IconUser } from '@tabler/icons-react';
 
 import type { AdminStatsResponse } from '../../types/document';
 
@@ -34,6 +34,7 @@ function StatTile({ label, value, tone }: { label: string; value: number | strin
 
 export function StatsDashboardCard({ stats, isLoading }: StatsDashboardCardProps): React.ReactElement {
   const maxTagCount = Math.max(...(stats?.top_tags.map((tag) => tag.count) ?? [1]), 1);
+  const maxCorrespondentCount = Math.max(...(stats?.top_correspondents.map((c) => c.count) ?? [1]), 1);
 
   return (
     <Card
@@ -56,19 +57,22 @@ export function StatsDashboardCard({ stats, isLoading }: StatsDashboardCardProps
               Statistik-Dashboard
             </Title>
             <Text c="var(--white-70)" size="sm">
-              Kennzahlen zu Dokumenten, Tags und Verteilungen.
+              Kennzahlen zu Dokumenten, Tags, Korrespondenten und Verteilungen.
             </Text>
           </Stack>
         </Group>
 
-        <SimpleGrid cols={{ base: 1, xs: 2, md: 4 }} spacing="sm">
+        <SimpleGrid cols={{ base: 2, xs: 3, md: 6 }} spacing="sm">
           <StatTile label="Dokumente" value={isLoading ? '…' : stats?.total_documents ?? 0} />
           <StatTile label="Tags" value={isLoading ? '…' : stats?.total_tags ?? 0} tone="blue" />
+          <StatTile label="Korrespondenten" value={isLoading ? '…' : stats?.total_correspondents ?? 0} tone="blue" />
+          <StatTile label="Dokumenttypen" value={isLoading ? '…' : stats?.total_document_types ?? 0} tone="blue" />
           <StatTile label="Ohne Tags" value={isLoading ? '…' : stats?.documents_without_tags ?? 0} tone="red" />
-          <StatTile label="Verwaiste Tags" value={isLoading ? '…' : stats?.orphaned_tags ?? 0} tone="red" />
+          <StatTile label="Ohne Korrespondent" value={isLoading ? '…' : stats?.documents_without_correspondent ?? 0} tone="red" />
         </SimpleGrid>
 
         <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
+          {/* Dokumente pro Typ */}
           <Stack gap="sm">
             <Group gap="xs">
               <IconFileText size={18} color="var(--gold)" />
@@ -84,16 +88,17 @@ export function StatsDashboardCard({ stats, isLoading }: StatsDashboardCardProps
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
-                {Object.entries(stats?.documents_by_type ?? {}).map(([type, count]) => (
-                  <Table.Tr key={type}>
-                    <Table.Td>{type}</Table.Td>
-                    <Table.Td>{count}</Table.Td>
+                {(stats?.documents_by_type ?? []).map((typeCount) => (
+                  <Table.Tr key={typeCount.name}>
+                    <Table.Td>{typeCount.name}</Table.Td>
+                    <Table.Td>{typeCount.count}</Table.Td>
                   </Table.Tr>
                 ))}
               </Table.Tbody>
             </Table>
           </Stack>
 
+          {/* Top-Tags */}
           <Stack gap="sm">
             <Group gap="xs">
               <IconTags size={18} color="var(--gold)" />
@@ -122,6 +127,37 @@ export function StatsDashboardCard({ stats, isLoading }: StatsDashboardCardProps
           </Stack>
         </SimpleGrid>
 
+        {/* Top-Korrespondenten */}
+        <Stack gap="sm">
+          <Group gap="xs">
+            <IconUser size={18} color="var(--blue)" />
+            <Text c="white" fw={800} style={{ fontFamily: '"Montserrat", sans-serif' }}>
+              Top-Korrespondenten
+            </Text>
+          </Group>
+          <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
+            <Stack gap="xs">
+              {(stats?.top_correspondents ?? []).map((correspondent) => (
+                <Stack key={correspondent.name} gap={4}>
+                  <Group justify="space-between" wrap="nowrap">
+                    <Text c="var(--white-70)" size="sm">
+                      {correspondent.name}
+                    </Text>
+                    <Text c="var(--blue)" size="sm" fw={800}>
+                      {correspondent.count}
+                    </Text>
+                  </Group>
+                  <Box style={{ height: 8, borderRadius: 999, background: 'var(--white-15)', overflow: 'hidden' }}>
+                    <Box style={{ width: `${Math.round((correspondent.count / maxCorrespondentCount) * 100)}%`, height: '100%', background: 'var(--blue)' }} />
+                  </Box>
+                </Stack>
+              ))}
+              {stats !== null && stats.top_correspondents.length === 0 ? <Text c="var(--white-40)">Noch keine Korrespondenten vorhanden.</Text> : null}
+            </Stack>
+          </SimpleGrid>
+        </Stack>
+
+        {/* Dokumente pro Monat */}
         <Stack gap="sm">
           <Text c="white" fw={800} style={{ fontFamily: '"Montserrat", sans-serif' }}>
             Dokumente pro Monat

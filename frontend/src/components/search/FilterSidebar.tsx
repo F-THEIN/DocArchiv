@@ -1,11 +1,12 @@
 import { ActionIcon, Badge, Button, Divider, MultiSelect, Select, Stack, Text, TextInput, Title } from '@mantine/core';
 import { IconFilter, IconX } from '@tabler/icons-react';
 
-import type { DocumentSort, Tag } from '../../types/document';
+import type { Correspondent, DocumentSort, DocumentTypeInfo, Tag } from '../../types/document';
 
 export interface FilterValues {
   selectedTags: string[];
-  documentType: string;
+  documentTypeId: string;
+  correspondentId: string;
   dateFrom: string;
   dateTo: string;
   sort: DocumentSort;
@@ -13,6 +14,8 @@ export interface FilterValues {
 
 interface FilterSidebarProps {
   tags: Tag[];
+  documentTypes: DocumentTypeInfo[];
+  correspondents: Correspondent[];
   isLoading: boolean;
   values: FilterValues;
   onChange: (values: FilterValues) => void;
@@ -46,10 +49,26 @@ const fieldStyles = {
   },
 };
 
-export function FilterSidebar({ tags, isLoading, values, onChange, onReset, onClose }: FilterSidebarProps): React.ReactElement {
+const dropdownStyles = {
+  ...fieldStyles,
+  dropdown: { background: 'var(--navy-card)', border: '1px solid var(--white-15)' },
+  option: { color: 'var(--white-70)' },
+};
+
+export function FilterSidebar({ tags, documentTypes, correspondents, isLoading, values, onChange, onReset, onClose }: FilterSidebarProps): React.ReactElement {
   const tagOptions = tags.map((tag) => ({
     value: tag.name,
     label: `${tag.name} (${tag.document_count})`,
+  }));
+
+  const documentTypeOptions = documentTypes.map((dt) => ({
+    value: String(dt.id),
+    label: `${dt.name} (${dt.document_count})`,
+  }));
+
+  const correspondentOptions = correspondents.map((c) => ({
+    value: String(c.id),
+    label: `${c.name} (${c.document_count})`,
   }));
 
   function patchValues(partialValues: Partial<FilterValues>): void {
@@ -83,7 +102,7 @@ export function FilterSidebar({ tags, isLoading, values, onChange, onReset, onCl
           Filter
         </Title>
         <Text size="sm" c="var(--white-70)">
-          Suche nach Tags, Typ und Dokumentdatum eingrenzen.
+          Suche nach Tags, Typ, Korrespondent und Dokumentdatum eingrenzen.
         </Text>
       </Stack>
 
@@ -107,12 +126,28 @@ export function FilterSidebar({ tags, isLoading, values, onChange, onReset, onCl
         }}
       />
 
-      <TextInput
+      <Select
         label="Dokumenttyp"
-        placeholder="z. B. rechnung"
-        value={values.documentType}
-        onChange={(event) => patchValues({ documentType: event.currentTarget.value })}
-        styles={fieldStyles}
+        placeholder="Alle Typen"
+        data={documentTypeOptions}
+        searchable
+        clearable
+        value={values.documentTypeId || null}
+        onChange={(documentTypeId) => patchValues({ documentTypeId: documentTypeId ?? '' })}
+        disabled={isLoading}
+        styles={dropdownStyles}
+      />
+
+      <Select
+        label="Korrespondent"
+        placeholder="Alle Korrespondenten"
+        data={correspondentOptions}
+        searchable
+        clearable
+        value={values.correspondentId || null}
+        onChange={(correspondentId) => patchValues({ correspondentId: correspondentId ?? '' })}
+        disabled={isLoading}
+        styles={dropdownStyles}
       />
 
       <TextInput
@@ -137,11 +172,7 @@ export function FilterSidebar({ tags, isLoading, values, onChange, onReset, onCl
         value={values.sort}
         allowDeselect={false}
         onChange={(sort) => patchValues({ sort: (sort as DocumentSort | null) ?? 'date_desc' })}
-        styles={{
-          ...fieldStyles,
-          dropdown: { background: 'var(--navy-card)', border: '1px solid var(--white-15)' },
-          option: { color: 'var(--white-70)' },
-        }}
+        styles={dropdownStyles}
       />
 
       <Button

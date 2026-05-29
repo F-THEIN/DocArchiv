@@ -29,7 +29,8 @@ def test_list_documents_passes_filters_to_service(client: TestClient, fake_docum
         params={
             "q": " stadtwerke strom ",
             "tags": "Rechnung, haus,",
-            "type": "Rechnung",
+            "document_type_id": "1",
+            "correspondent_id": "1",
             "date_from": "2026-01-01",
             "date_to": "2026-12-31",
             "page": "2",
@@ -48,7 +49,8 @@ def test_list_documents_passes_filters_to_service(client: TestClient, fake_docum
     assert fake_document_service.last_query is not None
     assert fake_document_service.last_query.q == "stadtwerke strom"
     assert fake_document_service.last_query.tags == ["rechnung", "haus"]
-    assert fake_document_service.last_query.document_type == "Rechnung"
+    assert fake_document_service.last_query.document_type_id == 1
+    assert fake_document_service.last_query.correspondent_id == 1
     assert fake_document_service.last_query.date_from == date(2026, 1, 1)
     assert fake_document_service.last_query.date_to == date(2026, 12, 31)
     assert fake_document_service.last_query.sort == "relevance"
@@ -61,7 +63,8 @@ def test_get_document_returns_document(client: TestClient) -> None:
     assert response.status_code == 200
     payload = response.json()
     assert payload["id"] == 1
-    assert payload["document_type"] == "Rechnung"
+    assert payload["document_type"]["name"] == "Rechnung"
+    assert payload["correspondent"]["name"] == "Stadtwerke"
     assert [tag["name"] for tag in payload["tags"]] == ["rechnung", "stadtwerke"]
 
 
@@ -82,7 +85,8 @@ def test_create_document_normalizes_tags_and_returns_created_document(client: Te
             "summary": " Rechnung der Stadtwerke fuer Strom und Gas ",
             "original_filename": "scan_001.pdf",
             "stored_filename": "2026-05-20_rechnung-stadtwerke.pdf",
-            "document_type": "Rechnung",
+            "document_type_id": 1,
+            "correspondent_id": 1,
             "document_date": "2026-05-20",
             "nextcloud_path": "Rechnung/2026-05-20_rechnung-stadtwerke.pdf",
             "tags": ["Rechnung", "stadtwerke", "rechnung", " "],
@@ -105,7 +109,7 @@ def test_create_document_rejects_empty_required_fields(client: TestClient) -> No
             "summary": "irrelevant",
             "original_filename": "scan_001.pdf",
             "stored_filename": "scan_001.pdf",
-            "document_type": "Rechnung",
+            "document_type_id": 1,
             "nextcloud_path": "Rechnung/scan_001.pdf",
             "tags": [],
         },
@@ -119,14 +123,14 @@ def test_update_document_replaces_tags(client: TestClient) -> None:
     response = client.put(
         "/api/documents/1",
         json={
-            "document_type": "Vertrag",
+            "document_type_id": 2,
             "tags": ["Vertrag", "Haus"],
         },
     )
 
     assert response.status_code == 200
     payload = response.json()
-    assert payload["document_type"] == "Vertrag"
+    assert payload["document_type_id"] == 2
     assert [tag["name"] for tag in payload["tags"]] == ["vertrag", "haus"]
 
 
@@ -154,14 +158,6 @@ def test_delete_document_returns_404_for_missing_document(client: TestClient) ->
     assert "Dokument mit ID 999" in response.json()["detail"]
 
 
-def test_list_document_types(client: TestClient) -> None:
-    """Dokumenttypen werden als sortierte Liste geliefert."""
-    response = client.get("/api/documents/types")
-
-    assert response.status_code == 200
-    assert response.json() == ["Rechnung"]
-
-
 def test_document_create_schema_removes_duplicate_tags() -> None:
     """Das Create-Schema normalisiert Tags deterministisch."""
     schema = DocumentCreate(
@@ -169,7 +165,7 @@ def test_document_create_schema_removes_duplicate_tags() -> None:
         summary="Zusammenfassung",
         original_filename="scan.pdf",
         stored_filename="scan.pdf",
-        document_type="Rechnung",
+        document_type_id=1,
         nextcloud_path="Rechnung/scan.pdf",
         tags=["Rechnung", "rechnung", "Haus", ""],
     )
@@ -185,7 +181,7 @@ def test_document_create_schema_rejects_blank_title() -> None:
             summary="Zusammenfassung",
             original_filename="scan.pdf",
             stored_filename="scan.pdf",
-            document_type="Rechnung",
+            document_type_id=1,
             nextcloud_path="Rechnung/scan.pdf",
             tags=[],
         )

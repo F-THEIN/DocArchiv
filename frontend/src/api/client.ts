@@ -1,15 +1,21 @@
 import type {
   AdminStatsResponse,
+  Correspondent,
+  CreateCorrespondentPayload,
   CreateDocumentPayload,
+  CreateDocumentTypePayload,
   CreateTagPayload,
   DatabaseInfoResponse,
   DocumentDetail,
   DocumentListQuery,
   DocumentSummary,
+  DocumentTypeInfo,
   PaginatedResponse,
   ResetDatabaseResponse,
   Tag,
+  UpdateCorrespondentPayload,
   UpdateDocumentPayload,
+  UpdateDocumentTypePayload,
   UpdateTagPayload,
 } from '../types/document';
 
@@ -93,7 +99,8 @@ function toQueryString(query: DocumentListQuery): string {
   const params = new URLSearchParams();
 
   appendStringParam(params, 'q', query.q);
-  appendStringParam(params, 'type', query.type);
+  appendNumberParam(params, 'document_type_id', query.document_type_id);
+  appendNumberParam(params, 'correspondent_id', query.correspondent_id);
   appendStringParam(params, 'date_from', query.date_from);
   appendStringParam(params, 'date_to', query.date_to);
   appendNumberParam(params, 'page', query.page);
@@ -127,6 +134,8 @@ export const apiClient = {
     return request('/health');
   },
 
+  // --- Dokumente ---
+
   listDocuments(query: DocumentListQuery = {}): Promise<PaginatedResponse<DocumentSummary>> {
     return request(`/documents${toQueryString(query)}`);
   },
@@ -154,6 +163,8 @@ export const apiClient = {
       method: 'DELETE',
     });
   },
+
+  // --- Tags ---
 
   listTags(): Promise<Tag[]> {
     return request('/tags');
@@ -183,9 +194,67 @@ export const apiClient = {
     });
   },
 
-  listDocumentTypes(): Promise<string[]> {
-    return request('/documents/types');
+  // --- Korrespondenten ---
+
+  listCorrespondents(): Promise<Correspondent[]> {
+    return request('/correspondents');
   },
+
+  createCorrespondent(payload: CreateCorrespondentPayload): Promise<Correspondent> {
+    return request('/correspondents', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  getCorrespondent(correspondentId: number): Promise<Correspondent> {
+    return request(`/correspondents/${correspondentId}`);
+  },
+
+  updateCorrespondent(correspondentId: number, payload: UpdateCorrespondentPayload): Promise<Correspondent> {
+    return request(`/correspondents/${correspondentId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  deleteCorrespondent(correspondentId: number): Promise<void> {
+    return request(`/correspondents/${correspondentId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // --- Dokumenttypen ---
+
+  listDocumentTypes(): Promise<DocumentTypeInfo[]> {
+    return request('/document-types');
+  },
+
+  createDocumentType(payload: CreateDocumentTypePayload): Promise<DocumentTypeInfo> {
+    return request('/document-types', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  getDocumentType(documentTypeId: number): Promise<DocumentTypeInfo> {
+    return request(`/document-types/${documentTypeId}`);
+  },
+
+  updateDocumentType(documentTypeId: number, payload: UpdateDocumentTypePayload): Promise<DocumentTypeInfo> {
+    return request(`/document-types/${documentTypeId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  deleteDocumentType(documentTypeId: number): Promise<void> {
+    return request(`/document-types/${documentTypeId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // --- Admin ---
 
   getAdminStats(): Promise<AdminStatsResponse> {
     return request('/admin/stats');

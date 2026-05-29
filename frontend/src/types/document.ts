@@ -1,3 +1,16 @@
+export interface Correspondent {
+  id: number;
+  name: string;
+  document_count: number;
+}
+
+export interface DocumentTypeInfo {
+  id: number;
+  name: string;
+  color: string | null;
+  document_count: number;
+}
+
 export interface Tag {
   id: number;
   name: string;
@@ -11,12 +24,15 @@ export interface DocumentSummary {
   summary: string;
   original_filename: string;
   stored_filename: string;
-  document_type: string;
+  document_type_id: number;
+  correspondent_id: number | null;
   document_date: string | null;
   nextcloud_path: string;
   nextcloud_url: string;
   created_at: string;
   updated_at: string;
+  document_type: DocumentTypeInfo;
+  correspondent: Correspondent | null;
   tags: Tag[];
 }
 
@@ -33,7 +49,8 @@ export interface PaginatedResponse<TItem> {
 export interface DocumentListQuery {
   q?: string;
   tags?: string[];
-  type?: string;
+  document_type_id?: number;
+  correspondent_id?: number;
   date_from?: string;
   date_to?: string;
   page?: number;
@@ -48,7 +65,8 @@ export interface DocumentFormValues {
   summary: string;
   original_filename: string;
   stored_filename: string;
-  document_type: string;
+  document_type_id: number;
+  correspondent_id: number | null;
   document_date: string | null;
   nextcloud_path: string;
   tags: string[];
@@ -68,6 +86,24 @@ export interface UpdateTagPayload {
   color?: string | null;
 }
 
+export interface CreateCorrespondentPayload {
+  name: string;
+}
+
+export interface UpdateCorrespondentPayload {
+  name?: string;
+}
+
+export interface CreateDocumentTypePayload {
+  name: string;
+  color?: string | null;
+}
+
+export interface UpdateDocumentTypePayload {
+  name?: string;
+  color?: string | null;
+}
+
 export interface MonthCount {
   month: string;
   count: number;
@@ -78,13 +114,27 @@ export interface TagCount {
   count: number;
 }
 
+export interface TypeCount {
+  name: string;
+  count: number;
+}
+
+export interface CorrespondentCount {
+  name: string;
+  count: number;
+}
+
 export interface AdminStatsResponse {
   total_documents: number;
   total_tags: number;
-  documents_by_type: Record<string, number>;
+  total_correspondents: number;
+  total_document_types: number;
+  documents_by_type: TypeCount[];
   documents_by_month: MonthCount[];
   top_tags: TagCount[];
+  top_correspondents: CorrespondentCount[];
   documents_without_tags: number;
+  documents_without_correspondent: number;
   orphaned_tags: number;
 }
 
@@ -105,4 +155,6 @@ export interface ResetDatabaseResponse {
   message: string;
   deleted_documents: number;
   deleted_tags: number;
+  deleted_correspondents: number;
+  deleted_document_types: number;
 }

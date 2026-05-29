@@ -13,10 +13,17 @@ def test_get_admin_stats_returns_dashboard_data(client: TestClient) -> None:
     payload = response.json()
     assert payload["total_documents"] == 2
     assert payload["total_tags"] == 3
-    assert payload["documents_by_type"] == {"Rechnung": 1, "Vertrag": 1}
+    assert payload["total_correspondents"] == 2
+    assert payload["total_document_types"] == 2
+    assert payload["documents_by_type"] == [
+        {"name": "Rechnung", "count": 1},
+        {"name": "Vertrag", "count": 1},
+    ]
     assert payload["documents_by_month"] == [{"month": "2026-05", "count": 2}]
     assert payload["top_tags"][0] == {"name": "rechnung", "count": 1}
+    assert payload["top_correspondents"] == [{"name": "Stadtwerke", "count": 1}]
     assert payload["documents_without_tags"] == 1
+    assert payload["documents_without_correspondent"] == 0
     assert payload["orphaned_tags"] == 1
 
 
@@ -30,6 +37,8 @@ def test_get_database_info_returns_technical_data(client: TestClient) -> None:
     assert payload["alembic_revision"] == "001_initial_schema"
     assert payload["postgres_version"] == "PostgreSQL 16.2"
     assert payload["tables"] == [
+        {"name": "correspondents", "row_count": 2, "size": "16 kB"},
+        {"name": "document_types", "row_count": 2, "size": "16 kB"},
         {"name": "documents", "row_count": 2, "size": "16 kB"},
         {"name": "tags", "row_count": 3, "size": "16 kB"},
     ]
@@ -45,4 +54,6 @@ def test_reset_database_calls_admin_service(client: TestClient, fake_admin_servi
         "message": "Datenbank wurde erfolgreich zurueckgesetzt.",
         "deleted_documents": 2,
         "deleted_tags": 3,
+        "deleted_correspondents": 1,
+        "deleted_document_types": 2,
     }

@@ -4,9 +4,9 @@ from datetime import date
 from typing import Literal
 
 from sqlalchemy import Select, and_, asc, desc, distinct, func, select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
-from domain.models import Document, DocumentTag, Tag
+from domain.models import Correspondent, Document, DocumentTag, DocumentType, Tag
 
 DocumentSort = Literal[
     "date_desc",
@@ -19,6 +19,118 @@ DocumentSort = Literal[
 ]
 
 
+class CorrespondentRepository:
+    """Kapselt Datenbankzugriffe fuer Korrespondenten."""
+
+    def __init__(self, session: Session) -> None:
+        """Initialisiert das Repository mit einer SQLAlchemy-Session."""
+        self.session = session
+
+    def get_by_id(self, correspondent_id: int) -> Correspondent | None:
+        """Liefert einen Korrespondenten anhand seiner ID."""
+        return self.session.get(Correspondent, correspondent_id)
+
+    def get_by_name(self, name: str) -> Correspondent | None:
+        """Liefert einen Korrespondenten anhand seines Namens."""
+        statement = select(Correspondent).where(Correspondent.name == name.strip())
+        return self.session.scalars(statement).first()
+
+    def get_or_create(self, name: str) -> Correspondent:
+        """Liefert einen vorhandenen Korrespondenten oder erstellt ihn."""
+        normalized_name = name.strip()
+        correspondent = self.get_by_name(normalized_name)
+        if correspondent is not None:
+            return correspondent
+        return self.create(Correspondent(name=normalized_name))
+
+    def create(self, correspondent: Correspondent) -> Correspondent:
+        """Fuegt einen Korrespondenten der Session hinzu und flusht ihn."""
+        self.session.add(correspondent)
+        self.session.flush()
+        self.session.refresh(correspondent)
+        return correspondent
+
+    def update(self, correspondent: Correspondent) -> Correspondent:
+        """Flusht einen geaenderten Korrespondenten und gibt ihn zurueck."""
+        self.session.flush()
+        self.session.refresh(correspondent)
+        return correspondent
+
+    def delete(self, correspondent: Correspondent) -> None:
+        """Loescht einen Korrespondenten aus der Session."""
+        self.session.delete(correspondent)
+        self.session.flush()
+
+    def list_with_document_counts(self) -> list[tuple[Correspondent, int]]:
+        """Liefert alle Korrespondenten mit zugehoeriger Dokumentanzahl."""
+        statement = (
+            select(Correspondent, func.count(Document.id).label("document_count"))
+            .outerjoin(Document, Correspondent.id == Document.correspondent_id)
+            .group_by(Correspondent.id)
+            .order_by(asc(Correspondent.name))
+        )
+        return [
+            (correspondent, int(document_count))
+            for correspondent, document_count in self.session.execute(statement).all()
+        ]
+
+
+class DocumentTypeRepository:
+    """Kapselt Datenbankzugriffe fuer Dokumenttypen."""
+
+    def __init__(self, session: Session) -> None:
+        """Initialisiert das Repository mit einer SQLAlchemy-Session."""
+        self.session = session
+
+    def get_by_id(self, document_type_id: int) -> DocumentType | None:
+        """Liefert einen Dokumenttyp anhand seiner ID."""
+        return self.session.get(DocumentType, document_type_id)
+
+    def get_by_name(self, name: str) -> DocumentType | None:
+        """Liefert einen Dokumenttyp anhand seines Namens."""
+        statement = select(DocumentType).where(DocumentType.name == name.strip())
+        return self.session.scalars(statement).first()
+
+    def get_or_create(self, name: str, color: str | None = None) -> DocumentType:
+        """Liefert einen vorhandenen Dokumenttyp oder erstellt ihn."""
+        normalized_name = name.strip()
+        document_type = self.get_by_name(normalized_name)
+        if document_type is not None:
+            return document_type
+        return self.create(DocumentType(name=normalized_name, color=color))
+
+    def create(self, document_type: DocumentType) -> DocumentType:
+        """Fuegt einen Dokumenttyp der Session hinzu und flusht ihn."""
+        self.session.add(document_type)
+        self.session.flush()
+        self.session.refresh(document_type)
+        return document_type
+
+    def update(self, document_type: DocumentType) -> DocumentType:
+        """Flusht einen geaenderten Dokumenttyp und gibt ihn zurueck."""
+        self.session.flush()
+        self.session.refresh(document_type)
+        return document_type
+
+    def delete(self, document_type: DocumentType) -> None:
+        """Loescht einen Dokumenttyp aus der Session."""
+        self.session.delete(document_type)
+        self.session.flush()
+
+    def list_with_document_counts(self) -> list[tuple[DocumentType, int]]:
+        """Liefert alle Dokumenttypen mit zugehoeriger Dokumentanzahl."""
+        statement = (
+            select(DocumentType, func.count(Document.id).label("document_count"))
+            .outerjoin(Document, DocumentType.id == Document.document_type_id)
+            .group_by(DocumentType.id)
+            .order_by(asc(DocumentType.name))
+        )
+        return [
+            (document_type, int(document_count))
+            for document_type, document_count in self.session.execute(statement).all()
+        ]
+
+
 class DocumentRepository:
     """Kapselt Datenbankzugriffe fuer Dokumente."""
 
@@ -27,10 +139,14 @@ class DocumentRepository:
         self.session = session
 
     def get_by_id(self, document_id: int) -> Document | None:
-        """Liefert ein Dokument anhand seiner ID inklusive Tags."""
+        """Liefert ein Dokument anhand seiner ID inklusive Relationen."""
         statement = (
             select(Document)
-            .options(selectinload(Document.tags))
+            .options(
+                joinedload(Document.document_type_rel),
+                joinedload(Document.correspondent),
+                selectinload(Document.tags),
+            )
             .where(Document.id == document_id)
         )
         return self.session.scalars(statement).first()
@@ -40,7 +156,8 @@ class DocumentRepository:
         *,
         q: str | None = None,
         tags: list[str] | None = None,
-        document_type: str | None = None,
+        document_type_id: int | None = None,
+        correspondent_id: int | None = None,
         date_from: date | None = None,
         date_to: date | None = None,
         page: int = 1,
@@ -51,12 +168,17 @@ class DocumentRepository:
         filters = self._build_filters(
             q=q,
             tags=tags or [],
-            document_type=document_type,
+            document_type_id=document_type_id,
+            correspondent_id=correspondent_id,
             date_from=date_from,
             date_to=date_to,
         )
 
-        statement = select(Document).options(selectinload(Document.tags))
+        statement = select(Document).options(
+            joinedload(Document.document_type_rel),
+            joinedload(Document.correspondent),
+            selectinload(Document.tags),
+        )
         count_statement = select(func.count(Document.id))
 
         if filters:
@@ -67,7 +189,7 @@ class DocumentRepository:
         statement = statement.offset((page - 1) * per_page).limit(per_page)
 
         total = self.session.scalar(count_statement) or 0
-        documents = list(self.session.scalars(statement).all())
+        documents = list(self.session.scalars(statement).unique().all())
         return documents, total
 
     def create(self, document: Document) -> Document:
@@ -82,17 +204,13 @@ class DocumentRepository:
         self.session.delete(document)
         self.session.flush()
 
-    def list_document_types(self) -> list[str]:
-        """Liefert alle vorhandenen Dokumenttypen alphabetisch sortiert."""
-        statement = select(distinct(Document.document_type)).order_by(asc(Document.document_type))
-        return [document_type for document_type in self.session.scalars(statement).all() if document_type]
-
     def _build_filters(
         self,
         *,
         q: str | None,
         tags: list[str],
-        document_type: str | None,
+        document_type_id: int | None,
+        correspondent_id: int | None,
         date_from: date | None,
         date_to: date | None,
     ) -> list[object]:
@@ -113,8 +231,11 @@ class DocumentRepository:
             )
             filters.append(Document.id.in_(tag_subquery))
 
-        if document_type:
-            filters.append(Document.document_type == document_type)
+        if document_type_id is not None:
+            filters.append(Document.document_type_id == document_type_id)
+
+        if correspondent_id is not None:
+            filters.append(Document.correspondent_id == correspondent_id)
 
         if date_from:
             filters.append(Document.document_date >= date_from)

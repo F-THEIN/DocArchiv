@@ -1,4 +1,4 @@
-"""Domain Services fuer Dokumente, Tags, Admin-Funktionen und Nextcloud-Linkaufbau."""
+"""Domain Services fuer Dokumente, Tags, Korrespondenten, Dokumenttypen, Admin-Funktionen und Nextcloud-Linkaufbau."""
 
 import logging
 from math import ceil
@@ -8,14 +8,21 @@ from urllib.parse import quote
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from domain.models import Document, Tag
+from domain.models import Correspondent, Document, DocumentType, Tag
 from domain.schemas import (
     AdminStatsResponse,
+    CorrespondentCount,
+    CorrespondentCreate,
+    CorrespondentResponse,
+    CorrespondentUpdate,
     DatabaseInfoResponse,
     DocumentCreate,
     DocumentListResponse,
     DocumentQueryParams,
     DocumentResponse,
+    DocumentTypeCreate,
+    DocumentTypeResponse,
+    DocumentTypeUpdate,
     DocumentUpdate,
     MonthCount,
     PaginatedResponse,
@@ -25,10 +32,16 @@ from domain.schemas import (
     TagCreate,
     TagResponse,
     TagUpdate,
+    TypeCount,
 )
 
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Fehlerklassen
+# ---------------------------------------------------------------------------
 
 
 class DocumentNotFoundError(ValueError):
@@ -37,6 +50,19 @@ class DocumentNotFoundError(ValueError):
 
 class TagNotFoundError(ValueError):
     """Fehler, wenn ein Tag nicht gefunden wurde."""
+
+
+class CorrespondentNotFoundError(ValueError):
+    """Fehler, wenn ein Korrespondent nicht gefunden wurde."""
+
+
+class DocumentTypeNotFoundError(ValueError):
+    """Fehler, wenn ein Dokumenttyp nicht gefunden wurde."""
+
+
+# ---------------------------------------------------------------------------
+# Repository-Protokolle
+# ---------------------------------------------------------------------------
 
 
 class DocumentRepositoryProtocol(Protocol):
@@ -50,7 +76,8 @@ class DocumentRepositoryProtocol(Protocol):
         *,
         q: str | None = None,
         tags: list[str] | None = None,
-        document_type: str | None = None,
+        document_type_id: int | None = None,
+        correspondent_id: int | None = None,
         date_from: object | None = None,
         date_to: object | None = None,
         page: int = 1,
@@ -64,9 +91,6 @@ class DocumentRepositoryProtocol(Protocol):
 
     def delete(self, document: Document) -> None:
         """Loescht ein Dokument."""
-
-    def list_document_types(self) -> list[str]:
-        """Liefert alle Dokumenttypen."""
 
 
 class TagRepositoryProtocol(Protocol):
@@ -97,6 +121,213 @@ class TagRepositoryProtocol(Protocol):
         """Aktualisiert einen Tag."""
 
 
+class CorrespondentRepositoryProtocol(Protocol):
+    """Repository-Protokoll fuer Korrespondentenzugriffe."""
+
+    def get_by_id(self, correspondent_id: int) -> Correspondent | None:
+        """Liefert einen Korrespondenten anhand seiner ID."""
+
+    def get_by_name(self, name: str) -> Correspondent | None:
+        """Liefert einen Korrespondenten anhand seines Namens."""
+
+    def get_or_create(self, name: str) -> Correspondent:
+        """Liefert einen vorhandenen Korrespondenten oder erstellt ihn."""
+
+    def create(self, correspondent: Correspondent) -> Correspondent:
+        """Persistiert einen Korrespondenten."""
+
+    def list_with_document_counts(self) -> list[tuple[Correspondent, int]]:
+        """Liefert Korrespondenten mit Dokumentanzahl."""
+
+    def delete(self, correspondent: Correspondent) -> None:
+        """Loescht einen Korrespondenten."""
+
+    def update(self, correspondent: Correspondent) -> Correspondent:
+        """Aktualisiert einen Korrespondenten."""
+
+
+class DocumentTypeRepositoryProtocol(Protocol):
+    """Repository-Protokoll fuer Dokumenttypzugriffe."""
+
+    def get_by_id(self, document_type_id: int) -> DocumentType | None:
+        """Liefert einen Dokumenttyp anhand seiner ID."""
+
+    def get_by_name(self, name: str) -> DocumentType | None:
+        """Liefert einen Dokumenttyp anhand seines Namens."""
+
+    def get_or_create(self, name: str, color: str | None = None) -> DocumentType:
+        """Liefert einen vorhandenen Dokumenttyp oder erstellt ihn."""
+
+    def create(self, document_type: DocumentType) -> DocumentType:
+        """Persistiert einen Dokumenttyp."""
+
+    def list_with_document_counts(self) -> list[tuple[DocumentType, int]]:
+        """Liefert Dokumenttypen mit Dokumentanzahl."""
+
+    def delete(self, document_type: DocumentType) -> None:
+        """Loescht einen Dokumenttyp."""
+
+    def update(self, document_type: DocumentType) -> DocumentType:
+        """Aktualisiert einen Dokumenttyp."""
+
+
+# ---------------------------------------------------------------------------
+# CorrespondentService
+# ---------------------------------------------------------------------------
+
+
+class CorrespondentService:
+    """Business-Logik fuer Korrespondenten."""
+
+    def __init__(self, *, correspondent_repository: CorrespondentRepositoryProtocol, session: Session) -> None:
+        """Initialisiert den Service mit Repository und Session."""
+        self.correspondent_repository = correspondent_repository
+        self.session = session
+
+    def list_correspondents(self) -> list[CorrespondentResponse]:
+        """Liefert alle Korrespondenten inklusive Dokumentanzahl."""
+        correspondents_with_counts = self.correspondent_repository.list_with_document_counts()
+        return [
+            CorrespondentResponse(
+                id=correspondent.id,
+                name=correspondent.name,
+                document_count=document_count,
+            )
+            for correspondent, document_count in correspondents_with_counts
+        ]
+
+    def create_correspondent(self, data: CorrespondentCreate) -> CorrespondentResponse:
+        """Erstellt einen neuen Korrespondenten oder liefert den vorhandenen zurueck."""
+        correspondent = self.correspondent_repository.get_or_create(data.name)
+        self.session.commit()
+        self.session.refresh(correspondent)
+        return CorrespondentResponse(
+            id=correspondent.id,
+            name=correspondent.name,
+            document_count=len(correspondent.documents),
+        )
+
+    def get_correspondent(self, correspondent_id: int) -> CorrespondentResponse:
+        """Liefert einen Korrespondenten anhand seiner ID oder wirft einen NotFound-Fehler."""
+        correspondent = self.correspondent_repository.get_by_id(correspondent_id)
+        if correspondent is None:
+            raise CorrespondentNotFoundError(f"Korrespondent mit ID {correspondent_id} wurde nicht gefunden.")
+        return CorrespondentResponse(
+            id=correspondent.id,
+            name=correspondent.name,
+            document_count=len(correspondent.documents),
+        )
+
+    def update_correspondent(self, correspondent_id: int, data: CorrespondentUpdate) -> CorrespondentResponse:
+        """Aktualisiert einen Korrespondenten oder wirft einen NotFound-Fehler."""
+        correspondent = self.correspondent_repository.get_by_id(correspondent_id)
+        if correspondent is None:
+            raise CorrespondentNotFoundError(f"Korrespondent mit ID {correspondent_id} wurde nicht gefunden.")
+
+        update_data = data.model_dump(exclude_unset=True)
+        for field_name, value in update_data.items():
+            setattr(correspondent, field_name, value)
+
+        updated = self.correspondent_repository.update(correspondent)
+        self.session.commit()
+        return CorrespondentResponse(
+            id=updated.id,
+            name=updated.name,
+            document_count=len(updated.documents),
+        )
+
+    def delete_correspondent(self, correspondent_id: int) -> None:
+        """Loescht einen Korrespondenten oder wirft einen NotFound-Fehler."""
+        correspondent = self.correspondent_repository.get_by_id(correspondent_id)
+        if correspondent is None:
+            raise CorrespondentNotFoundError(f"Korrespondent mit ID {correspondent_id} wurde nicht gefunden.")
+        self.correspondent_repository.delete(correspondent)
+        self.session.commit()
+
+
+# ---------------------------------------------------------------------------
+# DocumentTypeService
+# ---------------------------------------------------------------------------
+
+
+class DocumentTypeService:
+    """Business-Logik fuer Dokumenttypen."""
+
+    def __init__(self, *, document_type_repository: DocumentTypeRepositoryProtocol, session: Session) -> None:
+        """Initialisiert den Service mit Repository und Session."""
+        self.document_type_repository = document_type_repository
+        self.session = session
+
+    def list_document_types(self) -> list[DocumentTypeResponse]:
+        """Liefert alle Dokumenttypen inklusive Dokumentanzahl."""
+        types_with_counts = self.document_type_repository.list_with_document_counts()
+        return [
+            DocumentTypeResponse(
+                id=dt.id,
+                name=dt.name,
+                color=dt.color,
+                document_count=document_count,
+            )
+            for dt, document_count in types_with_counts
+        ]
+
+    def create_document_type(self, data: DocumentTypeCreate) -> DocumentTypeResponse:
+        """Erstellt einen neuen Dokumenttyp oder liefert den vorhandenen zurueck."""
+        dt = self.document_type_repository.get_or_create(data.name, data.color)
+        self.session.commit()
+        self.session.refresh(dt)
+        return DocumentTypeResponse(
+            id=dt.id,
+            name=dt.name,
+            color=dt.color,
+            document_count=len(dt.documents),
+        )
+
+    def get_document_type(self, document_type_id: int) -> DocumentTypeResponse:
+        """Liefert einen Dokumenttyp anhand seiner ID oder wirft einen NotFound-Fehler."""
+        dt = self.document_type_repository.get_by_id(document_type_id)
+        if dt is None:
+            raise DocumentTypeNotFoundError(f"Dokumenttyp mit ID {document_type_id} wurde nicht gefunden.")
+        return DocumentTypeResponse(
+            id=dt.id,
+            name=dt.name,
+            color=dt.color,
+            document_count=len(dt.documents),
+        )
+
+    def update_document_type(self, document_type_id: int, data: DocumentTypeUpdate) -> DocumentTypeResponse:
+        """Aktualisiert einen Dokumenttyp oder wirft einen NotFound-Fehler."""
+        dt = self.document_type_repository.get_by_id(document_type_id)
+        if dt is None:
+            raise DocumentTypeNotFoundError(f"Dokumenttyp mit ID {document_type_id} wurde nicht gefunden.")
+
+        update_data = data.model_dump(exclude_unset=True)
+        for field_name, value in update_data.items():
+            setattr(dt, field_name, value)
+
+        updated = self.document_type_repository.update(dt)
+        self.session.commit()
+        return DocumentTypeResponse(
+            id=updated.id,
+            name=updated.name,
+            color=updated.color,
+            document_count=len(updated.documents),
+        )
+
+    def delete_document_type(self, document_type_id: int) -> None:
+        """Loescht einen Dokumenttyp oder wirft einen NotFound-Fehler."""
+        dt = self.document_type_repository.get_by_id(document_type_id)
+        if dt is None:
+            raise DocumentTypeNotFoundError(f"Dokumenttyp mit ID {document_type_id} wurde nicht gefunden.")
+        self.document_type_repository.delete(dt)
+        self.session.commit()
+
+
+# ---------------------------------------------------------------------------
+# DocumentService
+# ---------------------------------------------------------------------------
+
+
 class DocumentService:
     """Business-Logik fuer Dokumente."""
 
@@ -119,7 +350,8 @@ class DocumentService:
         documents, total = self.document_repository.list_documents(
             q=query.q,
             tags=query.tags,
-            document_type=query.document_type,
+            document_type_id=query.document_type_id,
+            correspondent_id=query.correspondent_id,
             date_from=query.date_from,
             date_to=query.date_to,
             page=query.page,
@@ -149,7 +381,8 @@ class DocumentService:
             summary=data.summary,
             original_filename=data.original_filename,
             stored_filename=data.stored_filename,
-            document_type=data.document_type,
+            document_type_id=data.document_type_id,
+            correspondent_id=data.correspondent_id,
             document_date=data.document_date,
             nextcloud_path=data.nextcloud_path,
             nextcloud_url=self.build_nextcloud_url(data.nextcloud_path),
@@ -192,10 +425,6 @@ class DocumentService:
         self.document_repository.delete(document)
         self.session.commit()
 
-    def list_document_types(self) -> list[str]:
-        """Liefert alle bekannten Dokumenttypen."""
-        return self.document_repository.list_document_types()
-
     def build_nextcloud_url(self, nextcloud_path: str) -> str:
         """Baut einen Nextcloud-Link aus Basis-URL und relativem Dokumentpfad."""
         normalized_base_url = self.nextcloud_base_url.rstrip("/")
@@ -213,6 +442,11 @@ class DocumentService:
             if normalized_name:
                 tags.append(self.tag_repository.get_or_create(normalized_name))
         return tags
+
+
+# ---------------------------------------------------------------------------
+# TagService
+# ---------------------------------------------------------------------------
 
 
 class TagService:
@@ -288,6 +522,11 @@ class TagService:
         )
 
 
+# ---------------------------------------------------------------------------
+# AdminService
+# ---------------------------------------------------------------------------
+
+
 class AdminService:
     """Business-Logik fuer administrative Funktionen."""
 
@@ -296,42 +535,54 @@ class AdminService:
         self.session = session
 
     def reset_database(self) -> ResetDatabaseResponse:
-        """Loescht alle Dokument-, Tag- und Zuordnungsdaten unwiderruflich."""
+        """Loescht alle Dokument-, Tag-, Korrespondent- und Dokumenttyp-Daten unwiderruflich."""
         deleted_documents = self._count_table_rows("documents")
         deleted_tags = self._count_table_rows("tags")
+        deleted_correspondents = self._count_table_rows("correspondents")
+        deleted_document_types = self._count_table_rows("document_types")
 
         logger.warning(
-            "Admin-Aktion: Datenbank wird zurueckgesetzt. Dokumente=%s Tags=%s",
+            "Admin-Aktion: Datenbank wird zurueckgesetzt. Dokumente=%s Tags=%s Korrespondenten=%s Dokumenttypen=%s",
             deleted_documents,
             deleted_tags,
+            deleted_correspondents,
+            deleted_document_types,
         )
-        self.session.execute(text("TRUNCATE TABLE document_tags, documents, tags RESTART IDENTITY CASCADE"))
+        self.session.execute(
+            text("TRUNCATE TABLE document_tags, documents, tags, correspondents, document_types RESTART IDENTITY CASCADE")
+        )
         self.session.commit()
 
         return ResetDatabaseResponse(
             message="Datenbank wurde erfolgreich zurueckgesetzt.",
             deleted_documents=deleted_documents,
             deleted_tags=deleted_tags,
+            deleted_correspondents=deleted_correspondents,
+            deleted_document_types=deleted_document_types,
         )
 
     def get_stats(self) -> AdminStatsResponse:
         """Liefert fachliche Statistiken fuer die Admin-Seite."""
         total_documents = self._count_table_rows("documents")
         total_tags = self._count_table_rows("tags")
+        total_correspondents = self._count_table_rows("correspondents")
+        total_document_types = self._count_table_rows("document_types")
 
-        documents_by_type = {
-            str(row._mapping["document_type"]): int(row._mapping["count"])
+        documents_by_type = [
+            TypeCount(name=str(row._mapping["name"]), count=int(row._mapping["count"]))
             for row in self.session.execute(
                 text(
                     """
-                    SELECT document_type, COUNT(*) AS count
-                    FROM documents
-                    GROUP BY document_type
-                    ORDER BY document_type ASC
+                    SELECT dt.name AS name, COUNT(d.id) AS count
+                    FROM document_types dt
+                    LEFT JOIN documents d ON d.document_type_id = dt.id
+                    GROUP BY dt.id, dt.name
+                    ORDER BY count DESC, dt.name ASC
                     """
                 )
             )
-        }
+        ]
+
         documents_by_month = [
             MonthCount(month=str(row._mapping["month"]), count=int(row._mapping["count"]))
             for row in self.session.execute(
@@ -364,6 +615,23 @@ class AdminService:
                 )
             )
         ]
+
+        top_correspondents = [
+            CorrespondentCount(name=str(row._mapping["name"]), count=int(row._mapping["count"]))
+            for row in self.session.execute(
+                text(
+                    """
+                    SELECT c.name AS name, COUNT(d.id) AS count
+                    FROM correspondents c
+                    LEFT JOIN documents d ON d.correspondent_id = c.id
+                    GROUP BY c.id, c.name
+                    ORDER BY count DESC, c.name ASC
+                    LIMIT 10
+                    """
+                )
+            )
+        ]
+
         documents_without_tags = int(
             self.session.scalar(
                 text(
@@ -378,6 +646,20 @@ class AdminService:
             )
             or 0
         )
+
+        documents_without_correspondent = int(
+            self.session.scalar(
+                text(
+                    """
+                    SELECT COUNT(*)
+                    FROM documents
+                    WHERE correspondent_id IS NULL
+                    """
+                )
+            )
+            or 0
+        )
+
         orphaned_tags = int(
             self.session.scalar(
                 text(
@@ -396,10 +678,14 @@ class AdminService:
         return AdminStatsResponse(
             total_documents=total_documents,
             total_tags=total_tags,
+            total_correspondents=total_correspondents,
+            total_document_types=total_document_types,
             documents_by_type=documents_by_type,
             documents_by_month=documents_by_month,
             top_tags=top_tags,
+            top_correspondents=top_correspondents,
             documents_without_tags=documents_without_tags,
+            documents_without_correspondent=documents_without_correspondent,
             orphaned_tags=orphaned_tags,
         )
 
@@ -439,7 +725,7 @@ class AdminService:
 
     def _count_table_rows(self, table_name: str) -> int:
         """Zaehlt Zeilen einer bekannten Anwendungstabelle."""
-        allowed_tables = {"documents", "tags", "document_tags"}
+        allowed_tables = {"documents", "tags", "document_tags", "correspondents", "document_types"}
         if table_name not in allowed_tables:
             raise ValueError(f"Unbekannte Tabelle: {table_name}")
         return int(self.session.scalar(text(f"SELECT COUNT(*) FROM {table_name}")) or 0)

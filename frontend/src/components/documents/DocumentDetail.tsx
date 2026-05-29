@@ -1,5 +1,5 @@
 import { Anchor, Badge, Drawer, Group, List, Stack, Text, Title } from '@mantine/core';
-import { IconExternalLink } from '@tabler/icons-react';
+import { IconExternalLink, IconUser } from '@tabler/icons-react';
 
 import type { DocumentSummary } from '../../types/document';
 
@@ -47,12 +47,24 @@ export function DocumentDetail({ document, opened, onClose }: DocumentDetailProp
             </Title>
             <Text c="var(--white-40)">{document.original_filename}</Text>
             <Group gap="xs">
-              <Badge styles={{ root: { background: 'var(--white-15)', color: 'var(--white-70)' } }}>{document.document_type}</Badge>
+              <Badge styles={{ root: { background: 'var(--white-15)', color: 'var(--white-70)' } }}>{document.document_type.name}</Badge>
               <Badge styles={{ root: { borderColor: 'var(--white-15)', color: 'var(--white-40)' } }} variant="outline">
                 {formatOptionalDate(document.document_date)}
               </Badge>
             </Group>
           </Stack>
+
+          {document.correspondent !== null ? (
+            <Stack gap="xs">
+              <Title order={3} size="h4" c="white" style={{ fontFamily: '"Montserrat", sans-serif' }}>
+                Korrespondent
+              </Title>
+              <Group gap="xs">
+                <IconUser size={16} color="var(--blue)" />
+                <Text c="var(--white-70)">{document.correspondent.name}</Text>
+              </Group>
+            </Stack>
+          ) : null}
 
           <Stack gap="xs">
             <Title order={3} size="h4" c="white" style={{ fontFamily: '"Montserrat", sans-serif' }}>
