@@ -31,6 +31,9 @@ services:
       DOCARCHIV_STATIC_DIR: static
     ports:
       - "8088:8000"
+    networks:
+      - default
+      - traefik
     healthcheck:
       test:
         [
@@ -44,3 +47,7 @@ services:
 
 volumes:
   docarchiv-db-data:
+
+networks:
+  traefik:
+    external: true
