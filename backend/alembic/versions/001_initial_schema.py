@@ -61,7 +61,17 @@ def upgrade() -> None:
             server_default=sa.func.now(),
             nullable=False,
         ),
-        sa.Column("search_vector", postgresql.TSVECTOR(), nullable=True),
+        sa.Column(
+            "search_vector",
+            postgresql.TSVECTOR(),
+            sa.Computed(
+                "setweight(to_tsvector('german', coalesce(title, '')), 'A') || "
+                "setweight(to_tsvector('german', coalesce(summary, '')), 'B') || "
+                "setweight(to_tsvector('german', coalesce(original_filename, '')), 'C')",
+                persisted=True,
+            ),
+            nullable=True,
+        ),
         sa.PrimaryKeyConstraint("id"),
         sa.ForeignKeyConstraint(["document_type_id"], ["document_types.id"], ondelete="RESTRICT"),
         sa.ForeignKeyConstraint(["correspondent_id"], ["correspondents.id"], ondelete="SET NULL"),
@@ -94,48 +104,8 @@ def upgrade() -> None:
         sa.UniqueConstraint("document_id", "tag_id", name="uq_document_tags_document_id_tag_id"),
     )
 
-    # --- Trigger-Funktion fuer search_vector ---
-    # Baut den Suchvektor aus title, summary, original_filename sowie den
-    # Namen von Dokumenttyp und Korrespondent zusammen.
-    op.execute(
-        """
-        CREATE OR REPLACE FUNCTION documents_search_vector_update() RETURNS trigger AS $$
-        DECLARE
-            v_type_name TEXT;
-            v_corr_name TEXT;
-        BEGIN
-            SELECT name INTO v_type_name FROM document_types WHERE id = NEW.document_type_id;
-            IF NEW.correspondent_id IS NOT NULL THEN
-                SELECT name INTO v_corr_name FROM correspondents WHERE id = NEW.correspondent_id;
-            ELSE
-                v_corr_name := '';
-            END IF;
-
-            NEW.search_vector :=
-                setweight(to_tsvector('german', coalesce(NEW.title, '')), 'A') ||
-                setweight(to_tsvector('german', coalesce(NEW.summary, '')), 'B') ||
-                setweight(to_tsvector('german', coalesce(v_corr_name, '')), 'B') ||
-                setweight(to_tsvector('german', coalesce(v_type_name, '')), 'C') ||
-                setweight(to_tsvector('german', coalesce(NEW.original_filename, '')), 'C');
-
-            RETURN NEW;
-        END;
-        $$ LANGUAGE plpgsql;
-        """
-    )
-
-    # Trigger auf documents bei INSERT oder UPDATE
-    op.execute(
-        """
-        CREATE TRIGGER trg_documents_search_vector
-        BEFORE INSERT OR UPDATE ON documents
-        FOR EACH ROW
-        EXECUTE FUNCTION documents_search_vector_update();
-        """
-    )
-
-    # Trigger auf correspondents: Bei Namensaenderung search_vector aller
-    # zugehoerigen Dokumente aktualisieren.
+    # Trigger auf correspondents: Bei Namensaenderung updated_at aller
+    # zugehoerigen Dokumente aktualisieren, damit search_vector neu berechnet wird.
     op.execute(
         """
         CREATE OR REPLACE FUNCTION correspondents_name_update() RETURNS trigger AS $$
@@ -187,9 +157,6 @@ def downgrade() -> None:
     op.execute("DROP FUNCTION IF EXISTS document_types_name_update()")
     op.execute("DROP TRIGGER IF EXISTS trg_correspondents_name_update ON correspondents")
     op.execute("DROP FUNCTION IF EXISTS correspondents_name_update()")
-    op.execute("DROP TRIGGER IF EXISTS trg_documents_search_vector ON documents")
-    op.execute("DROP FUNCTION IF EXISTS documents_search_vector_update()")
-
     op.drop_table("document_tags")
     op.drop_index("ix_tags_name", table_name="tags")
     op.drop_table("tags")

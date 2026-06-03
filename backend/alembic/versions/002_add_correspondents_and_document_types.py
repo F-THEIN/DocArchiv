@@ -117,45 +117,6 @@ def upgrade() -> None:
             "ix_documents_correspondent_id", "documents", ["correspondent_id"], unique=False
         )
 
-    # --- Trigger-Funktion fuer search_vector (CREATE OR REPLACE ist idempotent) ---
-    op.execute(
-        """
-        CREATE OR REPLACE FUNCTION documents_search_vector_update() RETURNS trigger AS $$
-        DECLARE
-            v_type_name TEXT;
-            v_corr_name TEXT;
-        BEGIN
-            SELECT name INTO v_type_name FROM document_types WHERE id = NEW.document_type_id;
-            IF NEW.correspondent_id IS NOT NULL THEN
-                SELECT name INTO v_corr_name FROM correspondents WHERE id = NEW.correspondent_id;
-            ELSE
-                v_corr_name := '';
-            END IF;
-
-            NEW.search_vector :=
-                setweight(to_tsvector('german', coalesce(NEW.title, '')), 'A') ||
-                setweight(to_tsvector('german', coalesce(NEW.summary, '')), 'B') ||
-                setweight(to_tsvector('german', coalesce(v_corr_name, '')), 'B') ||
-                setweight(to_tsvector('german', coalesce(v_type_name, '')), 'C') ||
-                setweight(to_tsvector('german', coalesce(NEW.original_filename, '')), 'C');
-
-            RETURN NEW;
-        END;
-        $$ LANGUAGE plpgsql;
-        """
-    )
-
-    # Trigger auf documents (DROP IF EXISTS + CREATE ist idempotent)
-    op.execute("DROP TRIGGER IF EXISTS trg_documents_search_vector ON documents")
-    op.execute(
-        """
-        CREATE TRIGGER trg_documents_search_vector
-        BEFORE INSERT OR UPDATE ON documents
-        FOR EACH ROW
-        EXECUTE FUNCTION documents_search_vector_update();
-        """
-    )
-
     # --- Trigger: Korrespondent-Namensaenderung ---
     op.execute(
         """
@@ -213,7 +174,6 @@ def downgrade() -> None:
     op.execute("DROP FUNCTION IF EXISTS document_types_name_update()")
     op.execute("DROP TRIGGER IF EXISTS trg_correspondents_name_update ON correspondents")
     op.execute("DROP FUNCTION IF EXISTS correspondents_name_update()")
-    op.execute("DROP TRIGGER IF EXISTS trg_documents_search_vector ON documents")
 
     # Nur Spalten/Tabellen entfernen, die von dieser Migration erstellt wurden
     if _column_exists("documents", "correspondent_id"):

@@ -3,7 +3,7 @@
 from datetime import date, datetime
 from typing import List
 
-from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import Computed, Date, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -95,6 +95,12 @@ class Document(Base):
     )
     search_vector: Mapped[str | None] = mapped_column(
         TSVECTOR,
+        Computed(
+            "setweight(to_tsvector('german', coalesce(title, '')), 'A') || "
+            "setweight(to_tsvector('german', coalesce(summary, '')), 'B') || "
+            "setweight(to_tsvector('german', coalesce(original_filename, '')), 'C')",
+            persisted=True,
+        ),
         nullable=True,
     )
 
