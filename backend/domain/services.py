@@ -3,7 +3,7 @@
 import logging
 from math import ceil
 from typing import Any, Protocol
-from urllib.parse import quote
+from urllib.parse import parse_qs, quote, unquote, urlparse
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -376,6 +376,7 @@ class DocumentService:
 
     def create_document(self, data: DocumentCreate) -> DocumentResponse:
         """Erstellt ein Dokument inklusive Tags und Nextcloud-URL."""
+        normalized_nextcloud_path, resolved_nextcloud_url = self.resolve_nextcloud_reference(data.nextcloud_path)
         document = Document(
             title=data.title,
             summary=data.summary,
@@ -384,8 +385,8 @@ class DocumentService:
             document_type_id=data.document_type_id,
             correspondent_id=data.correspondent_id,
             document_date=data.document_date,
-            nextcloud_path=data.nextcloud_path,
-            nextcloud_url=self.build_nextcloud_url(data.nextcloud_path),
+            nextcloud_path=normalized_nextcloud_path,
+            nextcloud_url=resolved_nextcloud_url,
         )
         document.tags = self._get_or_create_tags(data.tags)
 
@@ -404,10 +405,12 @@ class DocumentService:
         tags = update_data.pop("tags", None)
 
         for field_name, value in update_data.items():
+            if field_name == "nextcloud_path":
+                normalized_nextcloud_path, resolved_nextcloud_url = self.resolve_nextcloud_reference(str(value))
+                document.nextcloud_path = normalized_nextcloud_path
+                document.nextcloud_url = resolved_nextcloud_url
+                continue
             setattr(document, field_name, value)
-
-        if "nextcloud_path" in update_data:
-            document.nextcloud_url = self.build_nextcloud_url(document.nextcloud_path)
 
         if tags is not None:
             document.tags = self._get_or_create_tags(tags)
@@ -427,12 +430,50 @@ class DocumentService:
 
     def build_nextcloud_url(self, nextcloud_path: str) -> str:
         """Baut einen Nextcloud-Link aus Basis-URL und relativem Dokumentpfad."""
+        if self._is_absolute_http_url(nextcloud_path):
+            return nextcloud_path.strip()
+
         normalized_base_url = self.nextcloud_base_url.rstrip("/")
         normalized_path = nextcloud_path.strip().lstrip("/")
         encoded_path = quote(normalized_path, safe="/")
 
         separator = "" if normalized_base_url.endswith("=") else "/"
         return f"{normalized_base_url}{separator}{encoded_path}"
+
+    def resolve_nextcloud_reference(self, nextcloud_reference: str) -> tuple[str, str]:
+        """Normalisiert Nextcloud-Referenz und liefert Pfad plus aufrufbare URL."""
+        normalized_reference = nextcloud_reference.strip()
+
+        if self._is_absolute_http_url(normalized_reference):
+            return self._extract_nextcloud_path_from_url(normalized_reference), normalized_reference
+
+        normalized_path = normalized_reference.lstrip("/")
+        return normalized_path, self.build_nextcloud_url(normalized_path)
+
+    @staticmethod
+    def _is_absolute_http_url(value: str) -> bool:
+        """Prueft, ob ein Wert eine absolute HTTP- oder HTTPS-URL ist."""
+        parsed_url = urlparse(value)
+        return parsed_url.scheme in {"http", "https"} and bool(parsed_url.netloc)
+
+    @staticmethod
+    def _extract_nextcloud_path_from_url(nextcloud_url: str) -> str:
+        """Leitet einen darstellbaren Nextcloud-Pfad aus einer URL ab."""
+        parsed_url = urlparse(nextcloud_url)
+        query_params = parse_qs(parsed_url.query)
+
+        nextcloud_dir = unquote(query_params.get("dir", [""])[0]).strip()
+        nextcloud_file = unquote(query_params.get("file", [""])[0]).strip()
+
+        if nextcloud_dir:
+            normalized_dir = nextcloud_dir.lstrip("/").rstrip("/")
+            normalized_file = nextcloud_file.lstrip("/")
+            if normalized_file:
+                return f"{normalized_dir}/{normalized_file}"
+            return normalized_dir
+
+        path_from_url = unquote(parsed_url.path).strip().lstrip("/")
+        return path_from_url or nextcloud_url.strip()
 
     def _get_or_create_tags(self, tag_names: list[str]) -> list[Tag]:
         """Liefert Tag-Modelle fuer normalisierte Namen und erstellt fehlende Tags."""

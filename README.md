@@ -55,6 +55,15 @@ Die wichtigsten Umgebungsvariablen:
 
 Vor Produktivbetrieb muss insbesondere `POSTGRES_PASSWORD` angepasst werden.
 
+### Nextcloud-Link-Eingabe bei Dokumenten
+
+Beim Anlegen oder Aktualisieren von Dokumenten kann das Feld `nextcloud_path` jetzt zwei Formen enthalten:
+
+- Relativer Pfad, zum Beispiel `Dokumente/Rechnungen/2025/stromrechnung.pdf`
+- Vollstaendiger Nextcloud-Link, zum Beispiel `https://nextcloud.example.com/apps/files/?dir=/Dokumente/Rechnungen/2025&file=stromrechnung.pdf`
+
+Bei einem vollen Link uebernimmt DocArchiv die URL direkt als Oeffnen-Link (`nextcloud_url`) und erzeugt daraus automatisch einen darstellbaren Pfad (`nextcloud_path`) fuer Listen und Detailansicht.
+
 ## Deployment mit Portainer auf Ubuntu
 
 Diese Anleitung geht davon aus, dass auf dem Ubuntu-Server Docker und Portainer bereits laufen.

@@ -272,10 +272,28 @@ Erstellt ein neues Dokument. Tags werden per get-or-create aufgeloest.
 | `document_type_id`  | integer       | ja      | ID des Dokumenttyps (muss existieren)       |
 | `correspondent_id`  | integer \| null | nein   | ID des Korrespondenten (muss existieren)    |
 | `document_date`     | date \| null   | nein   | Dokumentdatum (YYYY-MM-DD)                  |
-| `nextcloud_path`    | string        | ja      | Pfad in Nextcloud                           |
+| `nextcloud_path`    | string        | ja      | Relativer Nextcloud-Pfad **oder** kompletter `http(s)`-Nextcloud-Link |
 | `tags`              | string[]      | nein    | Tag-Namen (werden automatisch angelegt)     |
 
 **Response:** `201 Created` – Vollstaendiges Dokument-Objekt (siehe GET-Response)
+
+Beispiel mit komplettem Nextcloud-Link:
+
+```json
+{
+  "title": "Stromrechnung Februar 2025",
+  "summary": "Abrechnung Strom",
+  "original_filename": "stromrechnung_2025_02.pdf",
+  "stored_filename": "2025/02/stromrechnung_2025_02.pdf",
+  "document_type_id": 1,
+  "correspondent_id": 1,
+  "document_date": "2025-02-14",
+  "nextcloud_path": "https://nextcloud.example.com/apps/files/?dir=/Dokumente/Rechnungen/2025&file=stromrechnung_2025_02.pdf",
+  "tags": ["strom", "2025"]
+}
+```
+
+Hinweis: Bei einer kompletten URL nutzt DocArchiv diese URL direkt als `nextcloud_url` und leitet daraus einen darstellbaren `nextcloud_path` fuer die UI ab.
 
 ### `GET /api/documents/{document_id}`
 

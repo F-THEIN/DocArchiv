@@ -204,3 +204,35 @@ def test_document_service_builds_nextcloud_url_for_query_style_base() -> None:
         service.build_nextcloud_url("Rechnung/2026-05-20 rechnung.pdf")
         == "https://nextcloud.example.com/apps/files/?dir=/Documents/Scans/Rechnung/2026-05-20%20rechnung.pdf"
     )
+
+
+def test_document_service_accepts_full_nextcloud_url_unchanged() -> None:
+    """Ein kompletter Nextcloud-Link wird direkt als Ziel-URL verwendet."""
+    service = DocumentService(
+        document_repository=object(),
+        tag_repository=object(),
+        session=object(),
+        nextcloud_base_url="https://nextcloud.example.com/apps/files/?dir=/Documents/Scans",
+    )
+
+    full_url = "https://nextcloud.example.com/apps/files/?dir=/Documents/Scans/Rechnung&file=scan_001.pdf"
+    normalized_path, resolved_url = service.resolve_nextcloud_reference(full_url)
+
+    assert normalized_path == "Documents/Scans/Rechnung/scan_001.pdf"
+    assert resolved_url == full_url
+
+
+def test_document_service_extracts_path_from_share_url_without_dir_query() -> None:
+    """Bei Share-Links ohne dir-Query wird der URL-Pfad als nextcloud_path uebernommen."""
+    service = DocumentService(
+        document_repository=object(),
+        tag_repository=object(),
+        session=object(),
+        nextcloud_base_url="https://nextcloud.example.com/apps/files/?dir=/Documents/Scans",
+    )
+
+    full_url = "https://nextcloud.example.com/s/a1b2c3d4"
+    normalized_path, resolved_url = service.resolve_nextcloud_reference(full_url)
+
+    assert normalized_path == "s/a1b2c3d4"
+    assert resolved_url == full_url
