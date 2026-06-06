@@ -15,21 +15,22 @@ const MIN_CHIP_TOUCH_HEIGHT = 36;
 const CHIP_MIN_WIDTH = `max(${MIN_CHIP_TOUCH_WIDTH}px, max-content)`;
 
 export function TagCloud({ tags, selectedTags, onToggleTag, onEditTag }: TagCloudProps): React.ReactElement {
+  const visibleTags = tags.filter((tag) => tag.document_count > 0);
   const editableTag = tags.find((tag) => selectedTags.includes(tag.name)) ?? null;
   const tagElementMap = useRef<Record<string, HTMLButtonElement | null>>({});
 
   useEffect(() => {
     const selectedTagSet = new Set(selectedTags);
-    const firstSelectedTagName = tags.find((tag) => selectedTagSet.has(tag.name))?.name;
+    const firstSelectedTagName = visibleTags.find((tag) => selectedTagSet.has(tag.name))?.name;
 
     if (!firstSelectedTagName) {
       return;
     }
 
     tagElementMap.current[firstSelectedTagName]?.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
-  }, [selectedTags, tags]);
+  }, [selectedTags, visibleTags]);
 
-  if (tags.length === 0) {
+  if (visibleTags.length === 0) {
     return (
       <Stack gap={4} px="xs">
         <Group justify="space-between">
@@ -37,11 +38,11 @@ export function TagCloud({ tags, selectedTags, onToggleTag, onEditTag }: TagClou
             ✦ Tag-Schnellauswahl
           </Text>
           <Text size="11px" c="var(--white-40)">
-            Keine Tags
+            Keine Treffer
           </Text>
         </Group>
         <Text size="sm" c="var(--white-40)">
-          Noch keine Tags vorhanden.
+          Aktuell sind keine Tags mit Treffern verfuegbar.
         </Text>
       </Stack>
     );
@@ -55,7 +56,7 @@ export function TagCloud({ tags, selectedTags, onToggleTag, onEditTag }: TagClou
         </Text>
         <Group gap="sm">
           <Text size="11px" c="var(--white-40)">
-            {tags.length} verfuegbar
+            {visibleTags.length} verfuegbar
           </Text>
           {onEditTag !== undefined ? (
             <Anchor
@@ -97,7 +98,7 @@ export function TagCloud({ tags, selectedTags, onToggleTag, onEditTag }: TagClou
             minWidth: 'max-content',
           }}
         >
-          {tags.map((tag, index) => {
+          {visibleTags.map((tag, index) => {
             const isSelected = selectedTags.includes(tag.name);
             const activeColor = index % 3 === 0 ? 'var(--gold)' : index % 3 === 1 ? '#2563be' : 'var(--teal)';
 
