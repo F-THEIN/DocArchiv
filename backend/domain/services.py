@@ -86,6 +86,18 @@ class DocumentRepositoryProtocol(Protocol):
     ) -> tuple[list[Document], int]:
         """Liefert gefilterte und paginierte Dokumente."""
 
+    def list_tag_facets(
+        self,
+        *,
+        q: str | None = None,
+        tags: list[str] | None = None,
+        document_type_id: int | None = None,
+        correspondent_id: int | None = None,
+        date_from: object | None = None,
+        date_to: object | None = None,
+    ) -> list[tuple[Tag, int]]:
+        """Liefert Tag-Zaehler fuer die aktuelle Dokumentfilterung."""
+
     def create(self, document: Document) -> Document:
         """Persistiert ein Dokument."""
 
@@ -366,6 +378,26 @@ class DocumentService:
             per_page=query.per_page,
             pages=pages,
         )
+
+    def list_tag_facets(self, query: DocumentQueryParams) -> list[TagResponse]:
+        """Liefert Tag-Zaehler passend zur aktuellen Dokumentfilterung."""
+        tags_with_counts = self.document_repository.list_tag_facets(
+            q=query.q,
+            tags=query.tags,
+            document_type_id=query.document_type_id,
+            correspondent_id=query.correspondent_id,
+            date_from=query.date_from,
+            date_to=query.date_to,
+        )
+        return [
+            TagResponse(
+                id=tag.id,
+                name=tag.name,
+                color=tag.color,
+                document_count=document_count,
+            )
+            for tag, document_count in tags_with_counts
+        ]
 
     def get_document(self, document_id: int) -> DocumentResponse:
         """Liefert ein einzelnes Dokument oder wirft einen NotFound-Fehler."""

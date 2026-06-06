@@ -11,13 +11,14 @@ import {
   useMantineTheme,
 } from '@mantine/core';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
-import { IconAdjustmentsHorizontal, IconArchive, IconRefresh, IconSearch, IconSettings, IconTags } from '@tabler/icons-react';
+import { IconAdjustmentsHorizontal, IconArchive, IconRefresh, IconSettings } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
 
 import { useAdmin } from '../../hooks/useAdmin';
 import { useCorrespondents } from '../../hooks/useCorrespondents';
 import { useDocuments } from '../../hooks/useDocuments';
 import { useDocumentTypes } from '../../hooks/useDocumentTypes';
+import { useTagFacets } from '../../hooks/useTagFacets';
 import { useTags } from '../../hooks/useTags';
 import { AdminPage } from '../../pages/AdminPage';
 import { HomePage } from '../../pages/HomePage';
@@ -38,7 +39,7 @@ export function DocArchivAppShell(): React.ReactElement {
   const [desktopOpened, { toggle: toggleDesktop, close: closeDesktop }] = useDisclosure(true);
   const [selectedDocument, setSelectedDocument] = useState<DocumentSummary | null>(null);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
-  const [activeNavItem, setActiveNavItem] = useState<'archiv' | 'suche' | 'tags' | 'filter' | 'admin'>('archiv');
+  const [activeNavItem, setActiveNavItem] = useState<'archiv' | 'admin'>('archiv');
   const theme = useMantineTheme();
   const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
   const isCompactHeaderMode = useMediaQuery(`(orientation: landscape), (max-height: ${COMPACT_MODE_MAX_HEIGHT}px)`);
@@ -47,6 +48,26 @@ export function DocArchivAppShell(): React.ReactElement {
   const correspondentsState = useCorrespondents();
   const documentTypesState = useDocumentTypes();
   const adminState = useAdmin();
+  const tagFacetQuery = useMemo(
+    () => ({
+      q: documentsState.query.q,
+      tags: documentsState.query.tags,
+      document_type_id: documentsState.query.document_type_id,
+      correspondent_id: documentsState.query.correspondent_id,
+      date_from: documentsState.query.date_from,
+      date_to: documentsState.query.date_to,
+    }),
+    [
+      documentsState.query.correspondent_id,
+      documentsState.query.date_from,
+      documentsState.query.date_to,
+      documentsState.query.document_type_id,
+      documentsState.query.q,
+      documentsState.query.tags,
+    ],
+  );
+  const tagFacetState = useTagFacets(tagFacetQuery);
+  const visibleTags = tagFacetState.tags.length > 0 || tagFacetState.error === null ? tagFacetState.tags : tagsState.tags;
   const refreshLabel = 'Aktualisieren';
   const documentCount = documentsState.pagination?.total ?? documentsState.documents.length;
   const latestUploadMonth = useMemo(() => {
@@ -122,11 +143,11 @@ export function DocArchivAppShell(): React.ReactElement {
   async function handleTagSaved(): Promise<void> {
     setEditingTag(null);
     await tagsState.reload();
+    await tagFacetState.reload();
     await documentsState.reload();
   }
 
   function handleFilterNavigation(): void {
-    setActiveNavItem('filter');
     if (isMobile) {
       toggleMobile();
       return;
@@ -134,8 +155,15 @@ export function DocArchivAppShell(): React.ReactElement {
     toggleDesktop();
   }
 
-  function handleMainNavigation(item: 'archiv' | 'suche' | 'tags' | 'admin'): void {
+  function handleMainNavigation(item: 'archiv' | 'admin'): void {
     setActiveNavItem(item);
+    closeMobile();
+    closeDesktop();
+  }
+
+  function handleNavigateHome(): void {
+    setActiveNavItem('archiv');
+    setSelectedDocument(null);
     closeMobile();
     closeDesktop();
   }
@@ -146,6 +174,7 @@ export function DocArchivAppShell(): React.ReactElement {
     await Promise.all([
       documentsState.reload(),
       tagsState.reload(),
+      tagFacetState.reload(),
       correspondentsState.reload(),
       documentTypesState.reload(),
       adminState.reload(),
@@ -200,14 +229,16 @@ export function DocArchivAppShell(): React.ReactElement {
           justify="space-between"
         >
           <Group justify="space-between" wrap="nowrap" align="center">
-            <Title order={1} size="h2" fw={900} style={{ fontFamily: '"Montserrat", sans-serif', letterSpacing: '0.01em' }}>
-              <Text span c="white">
-                Doc
-              </Text>
-              <Text span c="var(--gold)">
-                Archiv
-              </Text>
-            </Title>
+            <UnstyledButton aria-label="Zur Startseite" onClick={handleNavigateHome}>
+              <Title order={1} size="h2" fw={900} style={{ fontFamily: '"Montserrat", sans-serif', letterSpacing: '0.01em' }}>
+                <Text span c="white">
+                  Doc
+                </Text>
+                <Text span c="var(--gold)">
+                  Archiv
+                </Text>
+              </Title>
+            </UnstyledButton>
             <ActionIcon
               variant="subtle"
               aria-label={refreshLabel}
@@ -277,10 +308,10 @@ export function DocArchivAppShell(): React.ReactElement {
 
       <MantineAppShell.Navbar p="md">
         <FilterSidebar
-          tags={tagsState.tags}
+          tags={visibleTags}
           documentTypes={documentTypesState.documentTypes}
           correspondents={correspondentsState.correspondents}
-          isLoading={tagsState.isLoading || documentTypesState.isLoading || correspondentsState.isLoading}
+          isLoading={tagsState.isLoading || tagFacetState.isLoading || documentTypesState.isLoading || correspondentsState.isLoading}
           values={filters}
           onChange={handleFilterChange}
           onReset={handleResetFilters}
@@ -310,10 +341,10 @@ export function DocArchivAppShell(): React.ReactElement {
             selectedTags={documentsState.query.tags ?? []}
             isLoadingDocuments={documentsState.isLoading}
             documentError={documentsState.error}
-            tagError={tagsState.error}
+            tagError={tagsState.error ?? tagFacetState.error}
             pagination={documentsState.pagination}
             searchValue={documentsState.query.q ?? ''}
-            tags={tagsState.tags}
+            tags={visibleTags}
             onSearch={handleSearch}
             onOpenDocument={handleOpenDocument}
             onCloseDocument={handleCloseDocument}
@@ -329,12 +360,10 @@ export function DocArchivAppShell(): React.ReactElement {
         <Group justify="space-around" wrap="nowrap">
           {[
             { key: 'archiv', label: 'Archiv', icon: IconArchive },
-            { key: 'suche', label: 'Suche', icon: IconSearch },
-            { key: 'tags', label: 'Tags', icon: IconTags },
             { key: 'filter', label: 'Filter', icon: IconAdjustmentsHorizontal },
             { key: 'admin', label: 'Admin', icon: IconSettings },
           ].map((item) => {
-            const isActive = activeNavItem === item.key;
+            const isActive = item.key === 'filter' ? (isMobile ? mobileOpened : desktopOpened) : activeNavItem === item.key;
             const Icon = item.icon;
 
             return (
@@ -343,7 +372,7 @@ export function DocArchivAppShell(): React.ReactElement {
                 onClick={() =>
                   item.key === 'filter'
                     ? handleFilterNavigation()
-                    : handleMainNavigation(item.key as 'archiv' | 'suche' | 'tags' | 'admin')
+                    : handleMainNavigation(item.key as 'archiv' | 'admin')
                 }
                 style={{ minWidth: 56 }}
               >

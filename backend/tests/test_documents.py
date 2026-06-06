@@ -56,6 +56,19 @@ def test_list_documents_passes_filters_to_service(client: TestClient, fake_docum
     assert fake_document_service.last_query.sort == "relevance"
 
 
+def test_list_tag_facets_passes_filters_to_service(client: TestClient, fake_document_service: FakeDocumentService) -> None:
+    """Tag-Facetten nutzen dieselbe Query-Normalisierung wie die Dokumentliste."""
+    response = client.get("/api/documents/tag-facets", params={"tags": "Rechnung, haus,"})
+
+    assert response.status_code == 200
+    assert response.json() == [
+        {"id": 1, "name": "rechnung", "color": "#003B7E", "document_count": 1},
+        {"id": 2, "name": "haus", "color": None, "document_count": 1},
+    ]
+    assert fake_document_service.last_query is not None
+    assert fake_document_service.last_query.tags == ["rechnung", "haus"]
+
+
 def test_get_document_returns_document(client: TestClient) -> None:
     """Ein vorhandenes Dokument kann per ID geladen werden."""
     response = client.get("/api/documents/1")

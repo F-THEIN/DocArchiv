@@ -211,6 +211,14 @@ class FakeDocumentService:
             pages=1 if items else 0,
         )
 
+    def list_tag_facets(self, query: DocumentQueryParams) -> list[TagResponse]:
+        """Liefert simulierte Tag-Facetten fuer Dokumentfilter."""
+        self.last_query = query
+        return [
+            TagResponse(id=1, name="rechnung", color="#003B7E", document_count=1),
+            TagResponse(id=2, name="haus", color=None, document_count=1),
+        ]
+
     def get_document(self, document_id: int) -> DocumentResponse:
         """Liefert ein Dokument oder simuliert einen NotFound-Fehler."""
         document = self.documents.get(document_id)

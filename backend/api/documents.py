@@ -12,6 +12,7 @@ from domain.schemas import (
     DocumentResponse,
     DocumentUpdate,
     PaginatedResponse,
+    TagResponse,
 )
 from domain.services import DocumentNotFoundError
 
@@ -45,6 +46,29 @@ def list_documents(
         sort=sort,
     )
     return service.list_documents(query)
+
+
+@router.get("/tag-facets", response_model=list[TagResponse])
+def list_tag_facets(
+    service: DocumentServiceDep,
+    q: str | None = Query(default=None, description="Volltextsuche"),
+    tags: str | None = Query(default=None, description="Kommaseparierte Tag-Liste"),
+    document_type_id: int | None = Query(default=None, description="Dokumenttyp-ID"),
+    correspondent_id: int | None = Query(default=None, description="Korrespondent-ID"),
+    date_from: date | None = Query(default=None, description="Startdatum inklusive"),
+    date_to: date | None = Query(default=None, description="Enddatum inklusive"),
+) -> list[TagResponse]:
+    """Liefert Tag-Zaehler passend zu Suche und aktiven Filtern."""
+    tag_list = [tag.strip() for tag in tags.split(",")] if tags else []
+    query = DocumentQueryParams(
+        q=q,
+        tags=tag_list,
+        document_type_id=document_type_id,
+        correspondent_id=correspondent_id,
+        date_from=date_from,
+        date_to=date_to,
+    )
+    return service.list_tag_facets(query)
 
 
 @router.get("/{document_id}", response_model=DocumentResponse)

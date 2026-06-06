@@ -192,6 +192,43 @@ class DocumentRepository:
         documents = list(self.session.scalars(statement).unique().all())
         return documents, total
 
+    def list_tag_facets(
+        self,
+        *,
+        q: str | None = None,
+        tags: list[str] | None = None,
+        document_type_id: int | None = None,
+        correspondent_id: int | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
+    ) -> list[tuple[Tag, int]]:
+        """Liefert Tag-Zaehler fuer die aktuelle Dokumentfilterung."""
+        filters = self._build_filters(
+            q=q,
+            tags=tags or [],
+            document_type_id=document_type_id,
+            correspondent_id=correspondent_id,
+            date_from=date_from,
+            date_to=date_to,
+        )
+        matching_document_ids = select(Document.id)
+
+        if filters:
+            matching_document_ids = matching_document_ids.where(and_(*filters))
+
+        filtered_document_tags = (
+            select(DocumentTag.tag_id, DocumentTag.document_id)
+            .where(DocumentTag.document_id.in_(matching_document_ids))
+            .subquery()
+        )
+        statement = (
+            select(Tag, func.count(filtered_document_tags.c.document_id).label("document_count"))
+            .outerjoin(filtered_document_tags, Tag.id == filtered_document_tags.c.tag_id)
+            .group_by(Tag.id)
+            .order_by(asc(Tag.name))
+        )
+        return [(tag, int(document_count)) for tag, document_count in self.session.execute(statement).all()]
+
     def create(self, document: Document) -> Document:
         """Fuegt ein Dokument der Session hinzu und flusht es."""
         self.session.add(document)

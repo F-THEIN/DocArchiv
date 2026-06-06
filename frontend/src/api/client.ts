@@ -140,6 +140,10 @@ export const apiClient = {
     return request(`/documents${toQueryString(query)}`);
   },
 
+  listDocumentTagFacets(query: DocumentListQuery = {}): Promise<Tag[]> {
+    return request(`/documents/tag-facets${toQueryString(query)}`);
+  },
+
   getDocument(documentId: number): Promise<DocumentDetail> {
     return request(`/documents/${documentId}`);
   },
