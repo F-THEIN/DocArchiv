@@ -5,7 +5,7 @@ import { DocumentDetail } from '../components/documents/DocumentDetail';
 import { DocumentList } from '../components/documents/DocumentList';
 import { SearchBar } from '../components/search/SearchBar';
 import { TagCloud } from '../components/tags/TagCloud';
-import type { DocumentSummary, Tag } from '../types/document';
+import type { Correspondent, DocumentSummary, DocumentTypeInfo, Tag, UpdateDocumentPayload } from '../types/document';
 
 interface HomePageProps {
   documents: DocumentSummary[];
@@ -17,6 +17,8 @@ interface HomePageProps {
   pagination: Parameters<typeof DocumentList>[0]['pagination'];
   searchValue: string;
   tags: Parameters<typeof TagCloud>[0]['tags'];
+  correspondents: Correspondent[];
+  documentTypes: DocumentTypeInfo[];
   onSearch: (query: string) => void;
   onOpenDocument: (document: DocumentSummary) => void;
   onCloseDocument: () => void;
@@ -24,6 +26,7 @@ interface HomePageProps {
   onRetryDocuments: () => void;
   onToggleTag: (tagName: string) => void;
   onEditTag: (tag: Tag) => void;
+  onUpdateDocument: (id: number, payload: UpdateDocumentPayload) => Promise<DocumentSummary>;
 }
 
 export function HomePage({
@@ -36,6 +39,8 @@ export function HomePage({
   pagination,
   searchValue,
   tags,
+  correspondents,
+  documentTypes,
   onSearch,
   onOpenDocument,
   onCloseDocument,
@@ -43,6 +48,7 @@ export function HomePage({
   onRetryDocuments,
   onToggleTag,
   onEditTag,
+  onUpdateDocument,
 }: HomePageProps): React.ReactElement {
   return (
     <Stack gap="lg">
@@ -74,7 +80,15 @@ export function HomePage({
         onRetry={onRetryDocuments}
       />
 
-      <DocumentDetail document={selectedDocument} opened={selectedDocument !== null} onClose={onCloseDocument} />
+      <DocumentDetail
+        document={selectedDocument}
+        opened={selectedDocument !== null}
+        correspondents={correspondents}
+        documentTypes={documentTypes}
+        tags={tags}
+        onClose={onCloseDocument}
+        onUpdate={onUpdateDocument}
+      />
     </Stack>
   );
 }

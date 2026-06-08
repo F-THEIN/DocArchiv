@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { apiClient, ApiError } from '../api/client';
-import type { DocumentListQuery, DocumentSummary, PaginatedResponse } from '../types/document';
+import type { DocumentListQuery, DocumentSummary, PaginatedResponse, UpdateDocumentPayload } from '../types/document';
 
 interface UseDocumentsResult {
   documents: DocumentSummary[];
@@ -12,6 +12,7 @@ interface UseDocumentsResult {
   setQuery: (query: DocumentListQuery) => void;
   updateQuery: (partialQuery: Partial<DocumentListQuery>) => void;
   reload: () => Promise<void>;
+  updateDocument: (id: number, payload: UpdateDocumentPayload) => Promise<DocumentSummary>;
 }
 
 function getErrorMessage(error: unknown): string {
@@ -76,6 +77,12 @@ export function useDocuments(initialQuery: DocumentListQuery = {}): UseDocuments
     };
   }, [response]);
 
+  const updateDocument = useCallback(async (id: number, payload: UpdateDocumentPayload): Promise<DocumentSummary> => {
+    const updated = await apiClient.updateDocument(id, payload);
+    await reload();
+    return updated;
+  }, [reload]);
+
   return {
     documents: response?.items ?? [],
     pagination,
@@ -85,5 +92,6 @@ export function useDocuments(initialQuery: DocumentListQuery = {}): UseDocuments
     setQuery,
     updateQuery,
     reload,
+    updateDocument,
   };
 }

@@ -147,6 +147,12 @@ export function DocArchivAppShell(): React.ReactElement {
     await documentsState.reload();
   }
 
+  async function handleUpdateDocument(...args: Parameters<typeof documentsState.updateDocument>): Promise<DocumentSummary> {
+    const updated = await documentsState.updateDocument(...args);
+    setSelectedDocument(updated);
+    return updated;
+  }
+
   function handleFilterNavigation(): void {
     if (isMobile) {
       toggleMobile();
@@ -345,6 +351,8 @@ export function DocArchivAppShell(): React.ReactElement {
             pagination={documentsState.pagination}
             searchValue={documentsState.query.q ?? ''}
             tags={visibleTags}
+            correspondents={correspondentsState.correspondents}
+            documentTypes={documentTypesState.documentTypes}
             onSearch={handleSearch}
             onOpenDocument={handleOpenDocument}
             onCloseDocument={handleCloseDocument}
@@ -352,6 +360,7 @@ export function DocArchivAppShell(): React.ReactElement {
             onRetryDocuments={() => void documentsState.reload()}
             onToggleTag={handleToggleTag}
             onEditTag={handleEditTag}
+            onUpdateDocument={handleUpdateDocument}
           />
         )}
       </MantineAppShell.Main>
