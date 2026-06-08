@@ -13,6 +13,8 @@ from domain.schemas import (
     AdminStatsResponse,
     CorrespondentCount,
     CorrespondentCreate,
+    CorrespondentMerge,
+    CorrespondentMergeResponse,
     CorrespondentResponse,
     CorrespondentUpdate,
     DatabaseInfoResponse,
@@ -255,6 +257,39 @@ class CorrespondentService:
             raise CorrespondentNotFoundError(f"Korrespondent mit ID {correspondent_id} wurde nicht gefunden.")
         self.correspondent_repository.delete(correspondent)
         self.session.commit()
+
+    def merge_correspondents(self, data: CorrespondentMerge) -> CorrespondentMergeResponse:
+        """Fuehrt mehrere Korrespondenten zu einem Ziel zusammen."""
+        target = self.correspondent_repository.get_by_id(data.target_id)
+        if target is None:
+            raise CorrespondentNotFoundError(f"Ziel-Korrespondent mit ID {data.target_id} wurde nicht gefunden.")
+
+        source_ids = [sid for sid in data.source_ids if sid != data.target_id]
+        if not source_ids:
+            return CorrespondentMergeResponse(
+                target=CorrespondentResponse(id=target.id, name=target.name, document_count=len(target.documents)),
+                merged_count=0,
+                documents_moved=0,
+            )
+
+        documents_moved = 0
+        for source_id in source_ids:
+            source = self.correspondent_repository.get_by_id(source_id)
+            if source is None:
+                raise CorrespondentNotFoundError(f"Quell-Korrespondent mit ID {source_id} wurde nicht gefunden.")
+            for doc in list(source.documents):
+                doc.correspondent_id = target.id
+                documents_moved += 1
+            self.session.flush()
+            self.correspondent_repository.delete(source)
+
+        self.session.commit()
+        self.session.refresh(target)
+        return CorrespondentMergeResponse(
+            target=CorrespondentResponse(id=target.id, name=target.name, document_count=len(target.documents)),
+            merged_count=len(source_ids),
+            documents_moved=documents_moved,
+        )
 
 
 # ---------------------------------------------------------------------------

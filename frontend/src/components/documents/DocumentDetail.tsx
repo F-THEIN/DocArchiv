@@ -185,6 +185,7 @@ export function DocumentDetail({
             value={correspondentId}
             onChange={setCorrespondentId}
             clearable
+            clearButtonProps={{ style: { color: 'var(--white-70)' } }}
             styles={DROPDOWN_STYLES}
           />
 

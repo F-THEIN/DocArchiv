@@ -3,7 +3,7 @@
 from fastapi import APIRouter, HTTPException, status
 
 from api.dependencies import CorrespondentServiceDep
-from domain.schemas import CorrespondentCreate, CorrespondentResponse, CorrespondentUpdate
+from domain.schemas import CorrespondentCreate, CorrespondentMerge, CorrespondentMergeResponse, CorrespondentResponse, CorrespondentUpdate
 from domain.services import CorrespondentNotFoundError
 
 router = APIRouter(prefix="/correspondents", tags=["correspondents"])
@@ -46,5 +46,14 @@ def delete_correspondent(correspondent_id: int, service: CorrespondentServiceDep
     """Loescht einen Korrespondenten."""
     try:
         service.delete_correspondent(correspondent_id)
+    except CorrespondentNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+
+@router.post("/merge", response_model=CorrespondentMergeResponse)
+def merge_correspondents(data: CorrespondentMerge, service: CorrespondentServiceDep) -> CorrespondentMergeResponse:
+    """Fuehrt mehrere Korrespondenten zu einem Ziel zusammen."""
+    try:
+        return service.merge_correspondents(data)
     except CorrespondentNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc

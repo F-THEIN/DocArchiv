@@ -59,6 +59,21 @@ class CorrespondentResponse(CorrespondentBase):
     document_count: int = 0
 
 
+class CorrespondentMerge(BaseModel):
+    """Request-Schema zum Zusammenfuehren mehrerer Korrespondenten."""
+
+    source_ids: list[int] = Field(min_length=1)
+    target_id: int
+
+
+class CorrespondentMergeResponse(BaseModel):
+    """Response-Schema nach erfolgtem Korrespondenten-Merge."""
+
+    target: CorrespondentResponse
+    merged_count: int
+    documents_moved: int
+
+
 # ---------------------------------------------------------------------------
 # Dokumenttyp
 # ---------------------------------------------------------------------------
