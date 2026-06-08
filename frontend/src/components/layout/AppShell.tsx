@@ -333,12 +333,14 @@ export function DocArchivAppShell(): React.ReactElement {
           <AdminPage
             stats={adminState.stats}
             databaseInfo={adminState.databaseInfo}
+            correspondents={correspondentsState.correspondents}
             isLoading={adminState.isLoading}
             isResetting={adminState.isResetting}
             error={adminState.error}
             onReload={adminState.reload}
             onResetDatabase={adminState.resetDatabase}
             onAfterReset={handleAfterDatabaseReset}
+            onAfterMerge={async () => { await correspondentsState.reload(); await documentsState.reload(); }}
           />
         ) : (
           <HomePage

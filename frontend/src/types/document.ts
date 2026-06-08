@@ -94,6 +94,17 @@ export interface UpdateCorrespondentPayload {
   name?: string;
 }
 
+export interface MergeCorrespondentsPayload {
+  source_ids: number[];
+  target_id: number;
+}
+
+export interface MergeCorrespondentsResponse {
+  target: Correspondent;
+  merged_count: number;
+  documents_moved: number;
+}
+
 export interface CreateDocumentTypePayload {
   name: string;
   color?: string | null;

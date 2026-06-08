@@ -10,6 +10,8 @@ import type {
   DocumentListQuery,
   DocumentSummary,
   DocumentTypeInfo,
+  MergeCorrespondentsPayload,
+  MergeCorrespondentsResponse,
   PaginatedResponse,
   ResetDatabaseResponse,
   Tag,
@@ -225,6 +227,13 @@ export const apiClient = {
   deleteCorrespondent(correspondentId: number): Promise<void> {
     return request(`/correspondents/${correspondentId}`, {
       method: 'DELETE',
+    });
+  },
+
+  mergeCorrespondents(payload: MergeCorrespondentsPayload): Promise<MergeCorrespondentsResponse> {
+    return request('/correspondents/merge', {
+      method: 'POST',
+      body: JSON.stringify(payload),
     });
   },
 

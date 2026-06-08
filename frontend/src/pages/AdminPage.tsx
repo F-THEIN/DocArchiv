@@ -2,30 +2,35 @@ import { Alert, Button, Group, Stack, Text, Title } from '@mantine/core';
 import { IconAlertCircle, IconRefresh, IconSettings } from '@tabler/icons-react';
 
 import { DatabaseInfoCard } from '../components/admin/DatabaseInfoCard';
+import { MergeCorrespondentsCard } from '../components/admin/MergeCorrespondentsCard';
 import { ResetDatabaseCard } from '../components/admin/ResetDatabaseCard';
 import { StatsDashboardCard } from '../components/admin/StatsDashboardCard';
-import type { AdminStatsResponse, DatabaseInfoResponse, ResetDatabaseResponse } from '../types/document';
+import type { AdminStatsResponse, Correspondent, DatabaseInfoResponse, ResetDatabaseResponse } from '../types/document';
 
 interface AdminPageProps {
   stats: AdminStatsResponse | null;
   databaseInfo: DatabaseInfoResponse | null;
+  correspondents: Correspondent[];
   isLoading: boolean;
   isResetting: boolean;
   error: string | null;
   onReload: () => Promise<void>;
   onResetDatabase: () => Promise<ResetDatabaseResponse>;
   onAfterReset: () => Promise<void>;
+  onAfterMerge: () => Promise<void>;
 }
 
 export function AdminPage({
   stats,
   databaseInfo,
+  correspondents,
   isLoading,
   isResetting,
   error,
   onReload,
   onResetDatabase,
   onAfterReset,
+  onAfterMerge,
 }: AdminPageProps): React.ReactElement {
   return (
     <Stack gap="lg">
@@ -60,6 +65,7 @@ export function AdminPage({
       ) : null}
 
       <StatsDashboardCard stats={stats} isLoading={isLoading} />
+      <MergeCorrespondentsCard correspondents={correspondents} onAfterMerge={onAfterMerge} />
       <DatabaseInfoCard databaseInfo={databaseInfo} isLoading={isLoading} />
       <ResetDatabaseCard isResetting={isResetting} onReset={onResetDatabase} onAfterReset={onAfterReset} />
     </Stack>
