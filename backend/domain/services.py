@@ -84,7 +84,7 @@ class DocumentRepositoryProtocol(Protocol):
         date_to: object | None = None,
         page: int = 1,
         per_page: int = 25,
-        sort: str = "date_desc",
+        sort: str = "created_desc",
     ) -> tuple[list[Document], int]:
         """Liefert gefilterte und paginierte Dokumente."""
 

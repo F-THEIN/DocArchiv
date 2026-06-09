@@ -31,7 +31,7 @@ export function useDocuments(initialQuery: DocumentListQuery = {}): UseDocuments
   const [query, setQuery] = useState<DocumentListQuery>({
     page: 1,
     per_page: 25,
-    sort: 'date_desc',
+    sort: 'created_desc',
     ...initialQuery,
   });
   const [response, setResponse] = useState<PaginatedResponse<DocumentSummary> | null>(null);

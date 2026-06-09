@@ -162,7 +162,7 @@ class DocumentRepository:
         date_to: date | None = None,
         page: int = 1,
         per_page: int = 25,
-        sort: DocumentSort = "date_desc",
+        sort: DocumentSort = "created_desc",
     ) -> tuple[list[Document], int]:
         """Liefert gefilterte und paginierte Dokumente mit Gesamtanzahl."""
         filters = self._build_filters(
