@@ -171,7 +171,7 @@ export function FilterSidebar({ tags, documentTypes, correspondents, isLoading, 
         data={sortOptions}
         value={values.sort}
         allowDeselect={false}
-        onChange={(sort) => patchValues({ sort: (sort as DocumentSort | null) ?? 'date_desc' })}
+        onChange={(sort) => patchValues({ sort: (sort as DocumentSort | null) ?? 'created_desc' })}
         styles={dropdownStyles}
       />
 

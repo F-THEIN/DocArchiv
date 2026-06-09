@@ -89,7 +89,7 @@ export function DocArchivAppShell(): React.ReactElement {
     correspondentId: documentsState.query.correspondent_id !== undefined ? String(documentsState.query.correspondent_id) : '',
     dateFrom: documentsState.query.date_from ?? '',
     dateTo: documentsState.query.date_to ?? '',
-    sort: documentsState.query.sort ?? 'date_desc',
+    sort: documentsState.query.sort ?? 'created_desc',
   };
 
   function handleSearch(query: string): void {
@@ -111,7 +111,7 @@ export function DocArchivAppShell(): React.ReactElement {
     documentsState.setQuery({
       page: 1,
       per_page: 25,
-      sort: 'date_desc',
+      sort: 'created_desc',
     });
   }
 

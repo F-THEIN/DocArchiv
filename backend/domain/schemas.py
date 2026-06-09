@@ -376,7 +376,7 @@ class DocumentQueryParams(BaseModel):
     date_to: date | None = None
     page: int = Field(default=1, ge=1)
     per_page: int = Field(default=25, ge=1, le=100)
-    sort: str = Field(default="date_desc")
+    sort: str = Field(default="created_desc")
 
     @field_validator("q")
     @classmethod

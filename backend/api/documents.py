@@ -30,7 +30,7 @@ def list_documents(
     date_to: date | None = Query(default=None, description="Enddatum inklusive"),
     page: int = Query(default=1, ge=1),
     per_page: int = Query(default=25, ge=1, le=100),
-    sort: str = Query(default="date_desc"),
+    sort: str = Query(default="created_desc"),
 ) -> PaginatedResponse[DocumentListResponse]:
     """Liefert Dokumente mit Suche, Filtern, Pagination und Sortierung."""
     tag_list = [tag.strip() for tag in tags.split(",")] if tags else []
